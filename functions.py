@@ -3263,18 +3263,20 @@ class NGS:
         # Save the figure
         if self.saveFigures:
             if 'Scaled' in dataType:
-                datasetType = 'EM_Scaled'
+                figType = 'EM_Scaled'
             elif 'Enrichment' in dataType:
-                datasetType = 'EM'
+                figType = 'EM'
             else:
                 print(f'{orange}ERROR: What do I do with this dataset type -'
                       f'{cyan} {dataType}{resetColor}\n')
                 sys.exit(1)
             if pca:
-                datasetType += f'-{pca.replace("\n", "-")}'
+                pca = (pca.replace(f'{self.datasetTag}', '').replace('\n', '')
+                       .replace(' ', '_').replace('Population', 'Pop'))
+                figType = f'{pca}-{figType}'
             if not isinstance(relIteration, bool):
-                datasetType += f'_{relIteration}'
-            self.saveFigure(fig=fig, figType=datasetType, seqLen=len(xTicks),
+                figType += f'_{relIteration}'
+            self.saveFigure(fig=fig, figType=figType, seqLen=len(xTicks),
                             combinedMotifs=combinedMotifs)
 
 
@@ -3340,7 +3342,7 @@ class NGS:
         data.columns = range(len(data.columns))
 
 
-        def plotLogo(limitYAxis=False):
+        def plotLogo(limitYAxis=False, pca=False):
             # Plot the sequence motif
             fig, ax = plt.subplots(figsize=self.figSize)
             motif = logomaker.Logo(data.transpose(), ax=ax, color_scheme=self.colorsAA,
@@ -3401,18 +3403,20 @@ class NGS:
 
             # Save the figure
             if self.saveFigures:
-                datasetType = 'Logo'
+                figType = 'Logo'
                 if limitYAxis:
-                    datasetType += '_yMin'
+                    figType += '_yMin'
                 if not isinstance(relIteration, bool):
-                    datasetType += f'_{relIteration}'
+                    figType += f'_{relIteration}'
                 if pca:
-                    datasetType += f'-{pca.replace("\n", "-")}'
-                self.saveFigure(fig=fig, figType=datasetType, seqLen=len(data.columns),
+                    pca = (pca.replace(f'{self.datasetTag}', '').replace('\n', '')
+                           .replace(' ', '_').replace('Population', 'Pop'))
+                    figType = f'{pca}-{figType}'
+                self.saveFigure(fig=fig, figType=figType, seqLen=len(data.columns),
                                 combinedMotifs=combinedMotifs)
 
         # Plot figure
-        plotLogo() # Full y-axis
+        plotLogo(pca=pca) # Full y-axis
 
         # Adjust yMin to fit the largest negative AA
         yMin = 0
@@ -3423,7 +3427,7 @@ class NGS:
         print(f'Adjusting Y Min:\n'
               f'y Max: {red}{np.round(yMax, 4)}{resetColor}\n'
               f'y Min: {red}{np.round(yMin, 4)}{resetColor}\n')
-        plotLogo(limitYAxis=True) # Limited y-axis
+        plotLogo(limitYAxis=True, pca=pca) # Limited y-axis
 
 
 
@@ -4241,13 +4245,13 @@ class NGS:
 
         # Define: Figure title
         if combinedMotifs:
-            title = (f'\n{self.enzymeName}\n'
+            title = (f'{self.enzymeName}\n'
                      f'{self.datasetTagMotif}\n'
                      f'{N:,} Unique Substrates')
             if 'Excl' in self.datasetTagMotif:
                 title = title.replace('Excl', 'Exclude')
         else:
-            title = (f'\n{self.enzymeName}\n'
+            title = (f'{self.enzymeName}\n'
                      f'{self.datasetTag}\n'
                      f'{N:,} Unique Substrates')
             if 'Excl' in self.datasetTag:
@@ -4258,8 +4262,7 @@ class NGS:
             fig, ax = plt.subplots(figsize=self.figSize)
 
             def selectDatapoints(eClick, eRelease):
-                # # Function to update selection with a rectangle
-
+                # Function to update selection with a rectangle
                 nonlocal ax, rectangles
 
                 # Define x, y coordinates
@@ -4873,11 +4876,9 @@ class NGS:
         # Define figure titles
         if numClusters == 1:
             figureTitle = f'PCA Population\n{self.datasetTag}'
-            datasetTag = f'PCA_Pop-{self.datasetTag}'
         else:
             figureTitle = (f'PCA Population {clusterIndex + 1}\n'
-                             f'{self.datasetTag}')
-            datasetTag = f'PCA_Pop_{clusterIndex + 1}-{self.datasetTag}'
+                           f'{self.datasetTag}')
 
         # Count fixed substrates
         countFullSubstrate = False
@@ -4941,7 +4942,7 @@ class NGS:
 
         # Plot data
         self.plotEnrichmentScores(dataType='Enrichment', pca=figureTitle)
-        #
+
         self.plotEnrichmentLogo(pca=figureTitle)
 
         # Plot: Word cloud
@@ -5512,10 +5513,12 @@ class NGS:
                 seqLength = len(self.xAxisLabels)
             else:
                 seqLength = self.motifLen
-            datasetType = 'Words'
+            figType = 'Words'
             if pca:
-                datasetType += f'-{pca}'
-            self.saveFigure(fig=fig, figType=datasetType, seqLen=seqLength,
+                pca = (pca.replace(f'{self.datasetTag}', '').replace('\n', '')
+                       .replace(' ', '_').replace('Population', 'Pop'))
+                figType = f'{pca}-{figType}'
+            self.saveFigure(fig=fig, figType=figType, seqLen=seqLength,
                             combinedMotifs=combinedMotifs)
 
 

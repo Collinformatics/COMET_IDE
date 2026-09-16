@@ -11,14 +11,14 @@ import sys
 
 # ===================================== User Inputs ======================================
 # Input 1: Select Dataset
-inEnzymeName = 'IDE'
+inEnzymeName = 'Mpro2'
 inPathFolder = os.path.join('Enzymes', inEnzymeName)
 inSaveFigures = True
 inSetFigureTimer = False
 
 # Input 2: Computational Parameters
 inFixResidues = True
-inFixedResidue = [['R','H']] #[['K','R'],'G']
+inFixedResidue = ['Q']
 inFixedPosition = [5]
 inExcludeResidues = False
 inExcludedResidue = [['F','Y']]
@@ -54,7 +54,7 @@ if inBlockFigures:
     inPlotMotifEnrichment = False
     inPlotWordCloud = False # Word cloud
     inPlotMotifEnrichment = False
-    # inPlotBarGraphs = False
+    inPlotBarGraphs = False
     inPlotPCA = False
     inPlotCounts = False
 
@@ -252,8 +252,8 @@ elif inExcludeResidues and loadUnfilteredSubs:
 
 # Delete datapoint
 if not isinstance(inDeleteSubstrates, list):
-    inDeleteSubstrates = [inDeleteSubstrates]
-if len(inDeleteSubstrates) > 0:
+    inDeleteSubstrates = list(inDeleteSubstrates)
+if inDeleteSubstrates[0]:
     print('=============================== Delete Substrates '
           '===============================')
     print(f'Delete Substrates:')
@@ -364,10 +364,8 @@ if inPlotPCA:
         for index, subCluster in enumerate(subPopulations):
             # Plot data
             ngs.plotSubstratePopulations(
-                substrates=subCluster, clusterIndex=index, numClusters=clusterCount,
-                datasetTag=datasetTag, saveTag=saveTag)
-        print(f'Debug PCA')
-        sys.exit()
+                substrates=subCluster, probInit=rfInitial, clusterIndex=index,
+                numClusters=clusterCount, datasetTag=datasetTag, saveTag=saveTag)
 
 # Plot: Word cloud
 if inPlotWordCloud:
