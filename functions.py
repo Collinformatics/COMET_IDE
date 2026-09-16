@@ -4960,9 +4960,9 @@ class NGS:
         cBarMin = 0
         if printData:
             if totalCounts:
-                print(f'Data:\n{data}\n\nMin: {int(cBarMin)}\nMax: {int(cBarMax)}')
+                print(f'Data:\n{data}\n\nMin: {int(cBarMin):,}\nMax: {int(cBarMax):,}')
             else:
-                print(f'Data:\n{data}\n\nMin: {cBarMin}\nMax: {cBarMax}')
+                print(f'Data:\n{data}\n\nMin: {cBarMin:,}\nMax: {cBarMax:,}')
 
         # Convert the counts to a data frame for Seaborn heatmap
         if self.residueLabelType == 0:
