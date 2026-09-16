@@ -93,10 +93,8 @@ def getFileNames(enzyme):
         inAAPositions = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']
     elif enzyme.lower() == 'mpro2':
         enzyme = f'SARS-CoV-2 M{'ᵖʳᵒ'}'
-        inFileNamesInitialSort = ['Mpro2-I_S1_L001', 'Mpro2-I_S1_L002',
-                                  'Mpro2-I_S1_L003', 'Mpro2-I_S1_L004']
-        inFileNamesFinalSort = ['Mpro2-R4_S3_L001', 'Mpro2-R4_S3_L002',
-                                'Mpro2-R4_S3_L003', 'Mpro2-R4_S3_L004']
+        inFileNamesInitialSort = ['Mpro2-I_S1_L001']
+        inFileNamesFinalSort = ['Mpro2-R4_S3_L001']
         inAAPositions = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']
     elif enzyme.lower() == 'mpro2-lq':
         enzyme = f'SARS-CoV-2 M{'ᵖʳᵒ'} LQ-NNS'
@@ -177,8 +175,8 @@ class NGS:
                  plotFigEM, plotFigEMScaled, plotFigLogo, plotFigWebLogo, plotFigWords,
                  wordLimit, wordsTotal, plotFigBars, NSubBars, plotFigPCA, numPCs,
                  NSubsPCA, plotSuffixTree, saveFigures, setFigureTimer,
-                 translateDNA=False, xAxisLabelsMotif=None, motifFilter=False,
-                 releasedCounts=False, plotFigMotifEnrich=False):
+                 translateDNA=False, minPhred=20, xAxisLabelsMotif=None,
+                 motifFilter=False, releasedCounts=False, plotFigMotifEnrich=False):
         if not isinstance(fixedAA, list):
             fixedAA = [fixedAA]
         if not isinstance(fixedPosition, list):
@@ -277,7 +275,7 @@ class NGS:
 
         # Parameters: DNA Processing
         self.translateDNA = translateDNA # Only set as True when processing DNA seqs
-        self.minQS = 20 # Minium Phred quality score for extracted substrates
+        self.minQS = minPhred # Minium Phred quality score for extracted substrates
         self.fileSize = []
         self.countExtractedSubs = []
         self.percentUnusableDNASeqs = []
@@ -437,6 +435,16 @@ class NGS:
         if sqroot:
             score = np.sqrt(score)
         return score
+
+
+
+    @staticmethod
+    def rankScores(values):
+        if not isinstance(values, list):
+            values = list(values)
+        ranked = pd.Series(values).rank(ascending=False, method='min')
+        return [int(x) for x in ranked]
+
 
 
 
@@ -4951,8 +4959,7 @@ class NGS:
 
 
 
-    def plotMatrix(self, data, figLabel, totalCounts=False,
-                   printData=True):
+    def plotMatrix(self, data, figLabel, totalCounts=False, printData=True):
         # Create heatmap
         cMapCustom = self.createCustomColorMap(colorType='Counts')
 
@@ -4961,7 +4968,10 @@ class NGS:
         cBarMax = np.ceil(data.values.max() * 10) / 10
         cBarMin = 0
         if printData:
-            print(f'Data:\n{data}\n\nMin: {cBarMin}\nMax: {cBarMax}')
+            if totalCounts:
+                print(f'Data:\n{data}\n\nMin: {int(cBarMin)}\nMax: {int(cBarMax)}')
+            else:
+                print(f'Data:\n{data}\n\nMin: {cBarMin}\nMax: {cBarMax}')
 
         # Convert the counts to a data frame for Seaborn heatmap
         if self.residueLabelType == 0:
@@ -5887,7 +5897,6 @@ class NGS:
         matrix = self.normalizeProbRatios(finalRF=finalRF,
                                           initialRF=initialRF,
                                           pHeader=False)
-        self.plotMatrix(data=matrix, figLabel='Prediction Matrix', printData=False)
 
         entropy = pd.DataFrame(0.0, index=matrix.columns, columns=['ΔS'])
         entropyMax = np.log2(len(matrix.index))
@@ -5946,7 +5955,7 @@ class NGS:
                     else:
                         score *= y
                 print(f'Score: {colorP}{score:.3e}{resetColor}\n')
-                activityPred[substrate] = score
+                activityPred[substrate] = float(score)
             ranked = pd.Series(activityPred.values()).rank(
                 ascending=False, method='min').astype(int)
 
@@ -5972,17 +5981,17 @@ class NGS:
                 #       f'* µ: {red}{mu:.3e}{resetColor}\n'
                 #       f'* σ: {red}{sigma:.3e}{resetColor}\n')
                 for seq, count in data.items():
-                    z[seq] = (count - mu) / sigma
+                    z[seq] = float((count - mu) / sigma)
                 return z
 
             # Normalize values
-            activityExpNorm = {}
-            # maxExpActivity = max(activityExp.values())
-            # for index, (substrate, activity) in enumerate(activityPred.items()):
-            #     activityPred[substrate] = activity / maxActivity
-            #     activityExpNorm[substrate] = activityExp[substrate] / maxExpActivity
-            activityPred = ZScores(activityPred, 'Predicted Activity')
-            activityExpNorm = ZScores(activityExp, 'Experimental Activity')
+            activityExpNorm, maxExpActivity = {}, max(activityExp.values())
+            activityPredNorm = {}
+            for index, (substrate, activity) in enumerate(activityPred.items()):
+                activityPredNorm[substrate] = activity / maxActivity
+                activityExpNorm[substrate] = activityExp[substrate] / maxExpActivity
+            activityPredZ = ZScores(activityPred, 'Predicted Activity')
+            activityExpZ = ZScores(activityExp, 'Experimental Activity')
             # print(f'Predicted Normalized Activity:')
             scores = []
             for index, (substrate, activity) in enumerate(activityPred.items()):
@@ -5990,43 +5999,39 @@ class NGS:
                 l = np.log(activity)
                 l = f'{l:,.{self.roundVal}f}'
                 scores.append(float(s))
-            #     print(f'    {pink}{substrate}{resetColor} ({ranked[index]}), '
-            #           f'Score: {colorP}{s}{resetColor}, '
-            #           f'Nat Log: {colorP}{l}{resetColor}')
-            # if errorBars:
-            #     print(f'Error Bars: {errorBars}')
-            # print('')
-            # sys.exit()
 
+            # Summarize datasets
+            expActivity = [round(a, self.roundVal) for a in activityExp.values()]
+            expScores = [round(a, self.roundVal) for a in activityExpNorm.values()]
+            expScoresZ = [round(a, self.roundVal) for a in activityExpZ.values()]
+            predScores = [round(a, self.roundVal) for a in activityPredNorm.values()]
+            predScoresZ = [round(a, self.roundVal) for a in activityPredZ.values()]
 
-            # # Rank activity scores
-            # rankedActivity = dict(sorted(activityPred.items(),
-            #                            key=lambda x: x[1], reverse=True))
-            # print(f'Ranked Predicted Activity:')
-            # for index, (substrate, activity) in enumerate(rankedActivity.items(),start=1):
-            #     print(f'    {pink}{substrate}{resetColor}, '
-            #           f'Score: {colorP}{activity:,.{self.roundVal}f}{resetColor}')
-            # print('')
+            expRank = self.rankScores(expScores)
+            predRank = self.rankScores(predScores)
 
             # Compare predictions
-            print(f'Predicted Vs Experimental Activity:')
-            for index, (substrate, activity) in enumerate(activityPred.items(), start=1):
-                x = activityExpNorm[substrate]
-                print(f'    {pink}{substrate}{resetColor}, '
-                      f'Pred: {colorP}{activity:,.{self.roundVal}f}{resetColor}\n'
-                      f'{" " * len(substrate)}       Exp: '
-                      f'{colorE}{x:,.{self.roundVal}f}{resetColor}')
-                if index == self.printNumber:
-                    break
-            print('')
+            print(f'Normalized Activity:')
+            data = pd.DataFrame(0.0, index=list(activityExp.keys()),
+                                columns=['Experimental', 'Predicted'])
+            data.loc[:, 'Experimental'] = expScores
+            data.loc[:, 'Predicted'] = predScores
+            print(data)
+            print(f'\nPredict Activity:\n'
+                  f'* Normalized: {colorP}{predScores}{resetColor}\n'
+                  f'* Z-Scores:   {colorP}{predScoresZ}{resetColor}\n')
+            print(f'Experimental Activity:\n'
+                  f'* Experimental: {colorE}{expActivity}{resetColor}\n'
+                  f'* Normalized:   {colorE}{expScores}{resetColor}\n'
+                  f'* Z-Scores:     {colorE}{expScoresZ}{resetColor}\n')
 
-            # Compare values
-            expScores = [round(a, 3) for a in activityExp.values()]
-            expScoresNorm = [round(float(a), 3) for a in activityExpNorm.values()]
-            print(f'Activity: {purple}{self.enzymeName}{resetColor}')
-            print(f'* Predicted Z-Scores:    {colorP}{scores}{resetColor}')
-            print(f'* Experimental Z-Scores: {colorE}{expScoresNorm}{resetColor}')
-            print(f'* Experimental Activity: {colorE}{expScores}{resetColor}\n\n')
+            # Spearman rank correlation
+            from scipy.stats import pearsonr, spearmanr
+            rho, p = spearmanr(expRank, predRank)
+            print(f'Spearman ρ: {rho:.3f}, p={p:.3f}\n\n')
+
+            # Plot prediction matrix
+            self.plotMatrix(data=matrix, figLabel='Prediction Matrix', printData=False)
 
             # Set title
             enzName = self.enzymeName.replace(' - ', '\n')
@@ -6173,9 +6178,6 @@ class NGS:
             # x_fit, y_fit, r2 = fitDataPoly(x=np.array(x), y=np.array(y))
             # print(f'R2 poly: {r2:.3f}')
 
-
-            from scipy.stats import pearsonr, spearmanr
-
             # Try linear first
             coeffs = np.polyfit(x, y, 1)
             yPred = np.polyval(coeffs, x)
@@ -6184,7 +6186,7 @@ class NGS:
             r2_linear = 1 - (ss_res / ss_tot)
             print(f'Linear R²: {r2_linear:.3f}')
 
-            # Also check Spearman rank correlation (more robust to outliers)
+            # Spearman rank correlation
             rho, p = spearmanr(x, y)
             print(f'Spearman ρ: {rho:.3f}, p={p:.3f}\n')
 
