@@ -1,5 +1,6 @@
 import os
 from functions import NGS
+import sys
 
 # PURPOSE: Load in a file (fastq or fasta), extract substrate sequences, and count AA
            # occurrences at each position in the substrates
@@ -17,30 +18,34 @@ from functions import NGS
 # ===================================== User Inputs ======================================
 # Input 1: File Location
 inFileName = [
-    'VEEV-R4_S2_L001_R1_001', 'VEEV-R4_S2_L001_R2_001',
+    'Mpro2-R4_S3_L001_R1_001', 'Mpro2-R4_S3_L001_R2_001',
+    'Mpro2-R4_S3_L002_R1_001', 'Mpro2-R4_S3_L002_R2_001',
+    'Mpro2-R4_S3_L003_R1_001', 'Mpro2-R4_S3_L003_R2_001',
+    'Mpro2-R4_S3_L004_R1_001', 'Mpro2-R4_S3_L004_R2_001',
 ] # Define file name(s)
 inEnzymeName = inFileName[0].split('-')[0]
 inPathFolder = os.path.join('Enzymes', inEnzymeName)
 inPathDNASeqs = os.path.join(inPathFolder, 'Fastq') # Define the fastq folder name
 inFileType = 'fastq' # Define the file type
 
-# Input 2: Saving The Data 'Mpro2-I_S1_L001'
-inSaveFileName = 'VEEV-R4_S2' # Add this name to filePaths() in functions.py
+# Input 2: Saving The Data
+inSaveFileName = 'Mpro2-R4_S3_L001' # Add this name to filePaths() in functions.py
 
 # Input 3: Substrate Parameters
-inAAPositions = ['R1','R2','R3','R4','R5','R6','R7','R8','R9','R10']
+inAAPositions = ['R1','R2','R3','R4','R5','R6','R7','R8']
 
 # Input 4: Substrate Recognition
 inPrintNumber = 10
 inStartSeqR1 = 'AAAGGCAGT' # Define DNA sequences that flank your substrate
-inEndSeqR1 = 'GGTGGAAGT' # KGS: AAAGGCAGT, GGS: GGTGGAAGT
+inEndSeqR1 = 'GGTGGAAGT' # KGS: AAAGGCAGT, GGS: GGTGGAAGT WGGS: TGGGGTGGAAGT
 inStartSeqR2 = inStartSeqR1
 inEndSeqR2 = inEndSeqR1
 
 # Input 5: Define Variables Used To Extract The Substrates
 inFixedLibrary = False
-inFixedResidue = ['Y']
-inFixedPosition = [5]
+inFixedResidue = ['W']
+inFixedPosition = [9]
+inMinPhred = 20 # Default: 20 (1/100 probability of incorrect read)
 
 # Input 6: Miscellaneous
 inAlertPath = '/Sounds/Bells.mp3' # Play a sound to let you know the script is done
@@ -58,8 +63,8 @@ ngs = NGS(enzyme=None, enzymeName=inEnzymeName, substrateLength=len(inAAPosition
           filesFinal=None, plotPosS=False, plotFigEM=False, plotFigEMScaled=False,
           plotFigLogo=False, plotFigWebLogo=False, plotFigWords=False, wordLimit=False,
           wordsTotal=False, plotFigBars=False, NSubBars=False, plotFigPCA=False,
-          numPCs=False, NSubsPCA=False, plotSuffixTree=False,
-          saveFigures=False, setFigureTimer=None, translateDNA=True)
+          numPCs=False, NSubsPCA=False, plotSuffixTree=False, saveFigures=False,
+          setFigureTimer=None, translateDNA=True, minPhred=inMinPhred)
 
 
 
@@ -67,6 +72,15 @@ ngs = NGS(enzyme=None, enzymeName=inEnzymeName, substrateLength=len(inAAPosition
 # Make directory
 if not os.path.exists(inPathDNASeqs):
     os.makedirs(inPathDNASeqs, exist_ok=True)
+
+def addSubs(subs, loadedSubs):
+    for key, value in loadedSubs.items():
+        if key in subs.keys():
+            subs[key] += value
+        else:
+            subs[key] = value
+    return subs
+
 
 # Extract the substrates
 loadR1 = False
@@ -76,25 +90,25 @@ substratesR1 = {}
 substratesR2 = {}
 for fileName in inFileName:
     if '_R1_' in fileName:
-        substratesR1 = ngs.loadAndTranslate(filePath=inPathDNASeqs, fileName=fileName,
+        newSubs = ngs.loadAndTranslate(filePath=inPathDNASeqs, fileName=fileName,
                                             fileType=inFileType, fixedSubs=inFixedLibrary,
                                             startSeq=inStartSeqR1, endSeq=inEndSeqR1,
                                             printQS=inPrintQualityScores,
                                             forwardRead=True)
+        substratesR1 = addSubs(substratesR1, newSubs)
         loadR1 = True
     elif '_R2_' in fileName:
-        substratesR2 = ngs.loadAndTranslate(filePath=inPathDNASeqs, fileName=fileName,
+        newSubs = ngs.loadAndTranslate(filePath=inPathDNASeqs, fileName=fileName,
                                             fileType=inFileType, fixedSubs=inFixedLibrary,
                                             startSeq=inStartSeqR2, endSeq=inEndSeqR2,
                                             printQS=inPrintQualityScores,
                                             forwardRead=False)
+        substratesR2 = addSubs(substratesR2, newSubs)
         loadR2 = True
     else:
-        # When R1 and R2 is missing from your file name
-        ngs.loadAndTranslate(filePath=inPathDNASeqs, fileName=fileName,
-                             fileType=inFileType, fixedSubs=inFixedLibrary,
-                             startSeq=inStartSeqR2, endSeq=inEndSeqR2,
-                             printQS=inPrintQualityScores, forwardRead=None)
+        print(f'ERROR: File {fileName} not recognized.\n'
+              f'Is this a forward (R1) or reverse (R2) read?')
+        sys.exit()
 
 
 # Combine substrate dictionaries
