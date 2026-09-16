@@ -5,6 +5,7 @@ import numpy as np
 import os
 import pandas as pd
 from scipy.optimize import curve_fit
+from scipy.stats import pearsonr, spearmanr
 import sys
 
 
@@ -39,8 +40,10 @@ inSubstrates = ['AVLQSGFR', 'VILQSGFR', 'VILQTGFR', 'VILQSPFR',
                 'VILHSGFR', 'VIMQSGFR', 'VPLQSGFR', 'NILQSGFR']
 inExpActivity = [46.1, 49.5, 14.5, 0.0, 13.1, 37.0, 0.0, 16.1]
 inExpActivity2 = [32.1, 39.1, 14.9, 0.0, 16.0, 36.5, 0.0, 15.6]
-inPredActivity = [0.964, 1.0, 0.01, 0.004, 0.055, 0.388, 0.007, 0.009]
-inPredActivity2 = [0.646, 1.0, 0.007, 0.008, 0.028, 0.493, 0.005, 0.038]
+# inPredActivity = [0.595, 1.0, 0.008, 0.004, 0.055, 0.417, 0.003, 0.049] # 6 AA
+# inPredActivity2 = [0.748, 1.0, 0.007, 0.009, 0.03, 0.453, 0.005, 0.027] # 6 AA
+inPredActivity = [0.964, 1.0, 0.01, 0.004, 0.055, 0.388, 0.007, 0.009] # 8 AA
+inPredActivity2 = [0.646, 1.0, 0.007, 0.008, 0.028, 0.493, 0.005, 0.038] # 8 AA
 inStDev = [0.1, 0.09, 0.02, 0, 0.06, 0.09, 0, 0.05]
 inStDev2 = [0.01, 0.058, 0.025, 0.0, 0.027, 0.044, 0.0, 0.033]
 inSubstratesNat = ['AVLQSGFR', 'VTFQSAVK', 'ATVQSKMS', 'ATLQAIAS',
@@ -52,18 +55,24 @@ inExpActivityNat = [1.000, 0.440, 0.040, 0.350,
 inPredActivityNat = [1.000, 0.258, 0.005, 0.151,
                      0.053, 0.342, 0.149, 0.073,
                      0.708, 0.124, 0.051]
+# inSubstratesNat = ['AVLQSG', 'VTFQSA', 'ATVQSK', 'ATLQAI',
+#                    'VKLQNN', 'VRLQAG', 'PMLQSA', 'TVLQAV',
+#                    'ATLQAE', 'TRLQSL', 'PKLQSS']
+# inPredActivityNat = [0.769, 0.124, 0.004, 0.598,
+#                      0.042, 1.0, 0.299, 0.364,
+#                      0.705, 0.209, 0.2]
 inStDevNat = [0 for _ in range(len(inSubstratesNat))]
 inDatasets = [ # Enzyme name, Substrates, Exp Activity, Exp StDev, Predicted Activity
     (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
     (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
-    (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
+    # (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
 ] # Plot this data
 
 # Input: Figures
 inPlotBarGraph = False
-inPlotTable = False
+inPlotTable = True
 inSavePath = 'Data/Figures/'
-inFigTitle = f'\nEnzyme Activity'
+inFigTitle = f'Enzyme Activity'
 inColor1 = '#BF5700'
 inColor2 = '#F8971F'
 inFigResolution = 600
@@ -75,7 +84,10 @@ inPlotMarkers = ['D', 'o', '^']
 
 
 # ========================================================================================
-# Build dataset
+"""
+    This takes the data given to "inDatasets" an builds the "data" dictionary.
+    If you change a label, make sure it matches the labels in "dataTags" and "dataZTags".
+"""
 data = {}
 dataTags = ['% Product', 'Predicted']
 dataZTags = ['Activity Z', 'Predicted Z']
@@ -94,10 +106,6 @@ for idx, enzyme in enumerate(inDatasets, start=1):
             f'Predicted Z': emptyList,
             f'Predicted Rank': emptyList,
         }
-"""
-    This takes the data given to "inDatasets" an builds the "data" dictionary.
-    If you change a label, make sure it matches the labels in "dataTags" and "dataZTags".
-"""
 
 
 
@@ -138,69 +146,6 @@ def convertNum(data, key):
     return activity
 
 
-def plotTable(data, tableCol):
-    # Create table
-    table = pd.DataFrame('', index=[], columns=tableCol)
-    for col in table.columns:
-        table.loc[:, col] = data[col]
-
-    # table.drop(f'Predicted {inEnzyme2}', axis=1, inplace=True)
-    # table.drop(f'Predicted {inEnzyme}', axis=1, inplace=True)
-    print(f'Table:\n{table}\n')
-
-    print()
-    for col in table.columns:
-        x = table.loc[:, col]
-        print(col)
-        for i in x:
-            print(i)
-        print()
-    # sys.exit()
-
-    # Make figure
-    h = (len(table.index) / 2) - 1
-    w = len(table.columns) * 2
-    fig, ax = plt.subplots(figsize=(1.2*w, 1.2*h))
-    ax.axis('off')  # hide axes
-    tbl = plt.table(cellText=table.values,
-                    colLabels=table.columns,
-                    loc='center',
-                    cellLoc='center',
-                    bbox=(0, 0, 1, 1)
-                    )
-    tbl.scale(1, 2)
-
-    # Bold headers
-    for i in range(len(table.columns)):
-        tbl[0, i].set_text_props(weight='bold')
-
-    tbl.auto_set_font_size(False)
-    tbl.set_fontsize(16)
-
-    for (row, col), cell in tbl.get_celld().items():
-        text = cell.get_text()
-        text.set_fontname('Times New Roman')
-        text.set_verticalalignment('top')
-
-    fig.tight_layout(pad=0.5)
-    fig.canvas.mpl_connect('key_press_event', pressKey)
-    plt.show()
-
-    if inSavePath:
-        figName = 'enzActivity-table.png'
-        if inFigSaveTag:
-            figName = figName.replace('.png', f'-{inFigSaveTag}.png')
-        if inNormalizeSub:
-            figName = figName.replace('.png',
-                                      f'-Norm_{inNormalizeSub}.png')
-        path = os.path.join(inSavePath, figName)
-        fig.savefig(path, dpi=inFigResolution)
-        print(f'Saving figure at path:\n'
-              f'     {path}\n\n')
-    else:
-        print(f'The figure was not saved\n\n')
-
-
 def zScore(data, tags, zTags):
     for enzyme in data.keys():
         # print(f'{enzyme}:')
@@ -214,10 +159,6 @@ def zScore(data, tags, zTags):
                 z.append(float((x - avg) / stdev))
             zRank = pd.Series(z).rank(ascending=False, method='min')
             zRank = [int(x) for x in zRank]
-            # for i in range(len(values)):
-            #     x, y = round(float(values[i]), inRoundVal), round(float(z[i]), inRoundVal)
-            #     print(f'* Value: {x}, Z Score: {y}')
-            # print()
             data[enzyme][f'{zTags[i]}'] = z
             data[enzyme][f'{zTags[i].replace(' Z', ' Rank')}'] = zRank
             # print(f'  * {values}\n'
@@ -250,98 +191,110 @@ def fitData(x, y):
     return xFit, yFit, r2
 
 
-def plotBars(data, barWidth=0.35):
-    e1, e2 = None, None
-    substrates = data['Substrates']
-    xTicks = np.arange(len(substrates))
-    y1 = data[f'% Product {e1}']
-    y2 = data[f'% Product {e2}']
-    d = pd.DataFrame(0.0, index=substrates, columns=[e1, e2])
-    d.loc[substrates, e1] = y1
-    d.loc[substrates, e2] = y2
-    print(f'Bar Graph: Normalized Activity\n'
-          f'{d}\n\n')
+def plotBars(dataset, barWidth=0.35):
+    """
+        Plot experimental and predicted activity of multiple enzymes.
+    """
+    columns = ['% Product', 'Predicted']
+    for enzyme in dataset.keys():
+        # Get data
+        substrates, yValues = [], []
+        if not yValues:
+            substrates = dataset[list(dataset.keys())[0]]['Substrates']
+        yValues.append(list(dataset[enzyme][columns[0]]))
+        yValues.append(list(dataset[enzyme][columns[1]]))
+        xTicks = np.arange(len(substrates))
+        d = pd.DataFrame(0.0, index=substrates, columns=columns)
+        for i in range(len(yValues)):
+            d.loc[substrates, d.columns[i]] = yValues[i]
 
-    # Labels
-    l1 = e1
-    l2 = e2
-    if f'M{"ᵖʳᵒ"}' in e1 or f'M{"ᵖʳᵒ"}' in e2:
-        l1 = f'SARS-CoV {e1}'
-        l2 = f'SARS-CoV-2 {e1}'
+        # Spearman rank correlation
+        rho, p = spearmanr(yValues[0], yValues[1])
+
+        # Labels
+        l1 = 'Experimental Activity'
+        l2 = 'Predicted Activity'
+        if f'M{"ᵖʳᵒ"}' in enzyme:
+            enzyme = f'SARS-CoV'
+        elif f'M{"ᵖʳᵒ"}' in enzyme:
+            enzyme = f'SARS-CoV-2'
+        if inFigTitle:
+            title = f'{enzyme}\n{inFigTitle}\nSpearman ρ: {rho:.3f}'
+        else:
+            title = f'{enzyme}\nSpearman ρ: {rho:.3f}'
+
+        # Plot bar graph
+        fig, ax = plt.subplots(figsize=inFigSize)
+        ax.bar(xTicks - barWidth / 2, yValues[0], barWidth, label=l1,
+               color=inColor2, edgecolor='black', linewidth=inLinewidth)
+        ax.bar(xTicks + barWidth / 2, yValues[1], barWidth, label=l2,
+               color=inColor1, edgecolor='black', linewidth=inLinewidth)
+        plt.title(title, fontsize=inTitleSize, fontweight='bold')
+        ax.set_ylabel('Normalized Activity', fontsize=inLabelSize)
+
+        # Set the thickness of the figure border
+        for _, spine in ax.spines.items():
+            spine.set_visible(True)
+            spine.set_linewidth(inLinewidth)
+
+        # Legend
+        legend_props = {
+            'size': inLabelTickSize-2,
+            'weight': 'bold'
+        }
+        ax.legend(edgecolor='black', prop=legend_props, loc='best')
+
+        # Set xticks
+        ax.set_xticks(xTicks)
+        ax.set_xticklabels(substrates, rotation=45)
+
+        # Set yticks
+        ax.set_ylim([0, 1.1])
+
+        # Set tick parameters
+        ax.tick_params(axis='both', which='major', length=inTickLength,
+                       labelsize=inLabelTickSize, width=inLinewidth)
+
+        fig.canvas.mpl_connect('key_press_event', pressKey)
+        plt.tight_layout()
+        plt.show()
+
+        if inSavePath:
+            figName = f'{enzyme}-enzActivity-bars.png'
+            if inFigSaveTag:
+                figName = figName.replace('.png', f'-{inFigSaveTag}.png')
+            if inNormalizeSub:
+                figName = figName.replace('.png',
+                                          f'-Norm_{inNormalizeSub}.png')
+            path = os.path.join(inSavePath, figName)
+            fig.savefig(path, dpi=inFigResolution)
+            print(f'Saving figure at path:\n'
+                  f'     {path}\n\n')
+        else:
+            print(f'The figure was not saved\n\n')
 
 
-    # Plot bar graph
-    fig, ax = plt.subplots(figsize=inFigSize)
-    ax.bar(xTicks - barWidth / 2, y1, barWidth, label=l1,
-           color=inColor2, edgecolor='black', linewidth=inLinewidth)
-    ax.bar(xTicks + barWidth / 2, y2, barWidth, label=l2,
-           color=inColor1, edgecolor='black', linewidth=inLinewidth)
-    plt.title(inFigTitle, fontsize=inTitleSize, fontweight='bold')
-    ax.set_ylabel('Normalized Activity', fontsize=inLabelSize)
-
-    # Set the thickness of the figure border
-    for _, spine in ax.spines.items():
-        spine.set_visible(True)
-        spine.set_linewidth(inLinewidth)
-
-    # Legend
-    legend_props = {
-        'size': inLabelTickSize-2,
-        'weight': 'bold'
-    }
-    ax.legend(edgecolor='black', prop=legend_props, loc='best')
-
-    # Set xticks
-    ax.set_xticks(xTicks)
-    ax.set_xticklabels(substrates, rotation=45)
-
-    # Set yticks
-    ax.set_ylim([0, 1.1])
-
-    # Set tick parameters
-    ax.tick_params(axis='both', which='major', length=inTickLength,
-                   labelsize=inLabelTickSize, width=inLinewidth)
-
-    fig.canvas.mpl_connect('key_press_event', pressKey)
-    plt.tight_layout()
-    plt.show()
-
-    if inSavePath:
-        figName = 'enzActivity-bars.png'
-        if inFigSaveTag:
-            figName = figName.replace('.png', f'-{inFigSaveTag}.png')
-        if inNormalizeSub:
-            figName = figName.replace('.png',
-                                      f'-Norm_{inNormalizeSub}.png')
-        path = os.path.join(inSavePath, figName)
-        fig.savefig(path, dpi=inFigResolution)
-        print(f'Saving figure at path:\n'
-              f'     {path}\n\n')
-    else:
-        print(f'The figure was not saved\n\n')
-
-
-def pdata(data):
+def pdata(dataset):
     print(f'Data:')
-    for k, v in data.items():
+    for k, v in dataset.items():
         print(f'{k}:')
         for t, d in v.items():
             print(f'  {t}: {d}')
         print()
 
 
-def processData(data, tags, zTags, natLog):
-    data = normalizeData(data, tags)
-    data = zScore(data, tags, zTags)
-    # pdata(data)
+def processData(dataset, tags, zTags):
+    dataset = normalizeData(dataset, tags)
+    dataset = zScore(dataset, tags, zTags)
+    # pdata(dataset)
 
     # Build tables
     tables = {}
-    for enzyme in data.keys():
-        columns = list(data[enzyme])
+    for enzyme in dataset.keys():
+        columns = list(dataset[enzyme])
         df = pd.DataFrame(0.0, index=[], columns=[])
         for col in columns:
-            df.loc[:, col] = data[enzyme][col]
+            df.loc[:, col] = dataset[enzyme][col]
         tables[enzyme] = df
     for enzyme, table in tables.items():
         print(f'{enzyme}:')
@@ -359,24 +312,22 @@ def processData(data, tags, zTags, natLog):
             table.to_csv(path, index=False)
     print()
 
-    return data, tables
+    return dataset, tables
+
 
 
 # ========================================================================================
 data, tables = processData(
-    data=data, tags=dataTags, zTags=dataZTags, natLog=inNatLog
+    dataset=data, tags=dataTags, zTags=dataZTags
 )
 
 # Plot data
 if inPlotBarGraph:
-    plotBars(data=tables)
-if inPlotTable:
-    plotTable(data=tables, tableCol=inTableCols)
+    plotBars(dataset=tables)
+
 
 
 # ========================================================================================
-
-
 # Plot data
 fig, ax = plt.subplots(figsize=inFigSize)
 plt.title(inFigTitle, fontsize=inTitleSize, fontweight='bold')
@@ -384,6 +335,10 @@ x, y = f'Activity Z {inEnzyme}', f'Predicted Z {inEnzyme}'
 for idx, enzyme in enumerate(data.keys()):
     x = data[enzyme][dataZTags[0]]
     y = data[enzyme][dataZTags[1]]
+
+    # Spearman rank correlation
+    rho, p = spearmanr(x, y)
+    print(f'Enzyme: {enzyme}\n* Spearman ρ: {rho:.3f}, p={p:.3f}\n')
 
     # Figure labels
     label = enzyme
@@ -396,7 +351,7 @@ for idx, enzyme in enumerate(data.keys()):
         label = label.replace(l2, f'SARS-CoV M{"ᵖʳᵒ"}')
     # print(f'{enzyme}: {label}')
     x_fit, y_fit, fitCurve = fitData(x=x, y=y)
-    label += f' R² = {fitCurve:.3f}'
+    label += f' R² = {fitCurve:.3f}, ρ = {rho:.3f}'
 
     # Add data
     edgeWidth = 1
