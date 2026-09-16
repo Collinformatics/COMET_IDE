@@ -83,11 +83,8 @@ def addSubs(subs, loadedSubs):
 
 
 # Extract the substrates
-loadR1 = False
-loadR2 = False
-substrates = {}
-substratesR1 = {}
-substratesR2 = {}
+loadR1, loadR2 = False, False
+substrates, substratesR1, substratesR2 = {}, {}, {}
 for fileName in inFileName:
     if '_R1_' in fileName:
         newSubs = ngs.loadAndTranslate(filePath=inPathDNASeqs, fileName=fileName,
