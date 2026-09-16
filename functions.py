@@ -2241,8 +2241,7 @@ class NGS:
 
 
 
-    def saveFigure(self, fig, figType, seqLen, N=False,
-                   combinedMotifs=False):
+    def saveFigure(self, fig, figType, seqLen, N=False, combinedMotifs=False):
         # Define: Save location
         enzName = self.enzymeName.replace(' - ', '-').replace(' ', '_')
         if self.motifFilter and not self.releasedCounts:
@@ -2996,10 +2995,9 @@ class NGS:
 
 
 
-    def calculateEnrichment(self, rfInitial, rfFinal,
-                            combinedMotifs=False, posFilter=False,
-                            relFilter=False, relIteration=False,
-                            relCounts=False):
+    def calculateEnrichment(self, rfInitial, rfFinal, combinedMotifs=False,
+                            posFilter=False, relFilter=False, relIteration=False,
+                            relCounts=False, plotFigures=False):
         print('========================== Calculate: Enrichment Score '
               '==========================')
         print(f'Enrichment Scores:\n'
@@ -3105,44 +3103,45 @@ class NGS:
               f'{heights}\n\n')
 
 
-        # Plot: Enrichment Map
-        if self.plotFigEM:
-            self.plotEnrichmentScores(dataType='Enrichment',
+        if plotFigures:
+            # Plot: Enrichment Map
+            if self.plotFigEM:
+                self.plotEnrichmentScores(dataType='Enrichment',
+                                          combinedMotifs=combinedMotifs,
+                                          posFilter=posFilter,
+                                          relFilter=relFilter,
+                                          relIteration=relIteration,
+                                          relCounts=relCounts)
+            if self.plotFigEMScaled:
+                self.plotEnrichmentScores(dataType='Scaled Enrichment',
+                                          combinedMotifs=combinedMotifs,
+                                          posFilter=posFilter,
+                                          relFilter=relFilter,
+                                          relIteration=relIteration,
+                                          relCounts=relCounts)
+
+            # Plot: Enrichment Logo
+            if self.plotFigLogo:
+                self.plotEnrichmentLogo(combinedMotifs=combinedMotifs,
+                                        posFilter=posFilter,
+                                        relFilter=relFilter,
+                                        relIteration=relIteration,
+                                        relCounts=relCounts)
+
+            # Calculate & Plot: Weblogo
+            if self.plotFigWebLogo:
+                self.calculateWeblogo(probability=rfFinal,
                                       combinedMotifs=combinedMotifs,
-                                      posFilter=posFilter,
-                                      relFilter=relFilter,
                                       relIteration=relIteration,
                                       relCounts=relCounts)
-        if self.plotFigEMScaled:
-            self.plotEnrichmentScores(dataType='Scaled Enrichment',
-                                      combinedMotifs=combinedMotifs,
-                                      posFilter=posFilter,
-                                      relFilter=relFilter,
-                                      relIteration=relIteration,
-                                      relCounts=relCounts)
-
-        # Plot: Enrichment Logo
-        if self.plotFigLogo:
-            self.plotEnrichmentLogo(combinedMotifs=combinedMotifs,
-                                    posFilter=posFilter,
-                                    relFilter=relFilter,
-                                    relIteration=relIteration,
-                                    relCounts=relCounts)
-
-        # Calculate & Plot: Weblogo
-        if self.plotFigWebLogo:
-            self.calculateWeblogo(probability=rfFinal,
-                                  combinedMotifs=combinedMotifs,
-                                  relIteration=relIteration,
-                                  relCounts=relCounts)
 
         return self.eMap
 
 
 
-    def plotEnrichmentScores(self, dataType, combinedMotifs=False,
-                             posFilter=False, relFilter=False,
-                             relIteration=False, relCounts=False):
+    def plotEnrichmentScores(self, dataType, combinedMotifs=False, posFilter=False,
+                             relFilter=False, relIteration=False, relCounts=False,
+                             pca=False):
         print('============================ Plot: Enrichment Score '
               '=============================')
         # Select: Dataset
@@ -3168,6 +3167,8 @@ class NGS:
             title = self.title
         if len(self.datasetTag.replace('[', '').replace(']', '').replace('-', '')) > 40:
             title = title.replace('Register ', 'Register\n')
+        if pca:
+            title = f'{self.enzyme}\n{pca}'
 
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n'
              f'Unique Substrates: {red}{self.nSubsFinalUniqueSeqs:,}{resetColor}')
@@ -3269,6 +3270,8 @@ class NGS:
                 print(f'{orange}ERROR: What do I do with this dataset type -'
                       f'{cyan} {dataType}{resetColor}\n')
                 sys.exit(1)
+            if pca:
+                datasetType += f'-{pca.replace("\n", "-")}'
             if not isinstance(relIteration, bool):
                 datasetType += f'_{relIteration}'
             self.saveFigure(fig=fig, figType=datasetType, seqLen=len(xTicks),
@@ -3276,9 +3279,8 @@ class NGS:
 
 
 
-    def plotEnrichmentLogo(self, combinedMotifs=False,
-                           posFilter=False, relFilter=False,
-                           relIteration=False, relCounts=False):
+    def plotEnrichmentLogo(self, combinedMotifs=False, posFilter=False, relFilter=False,
+                           relIteration=False, relCounts=False, pca=False):
         print('============================= Plot: Enrichment Logo '
               '=============================')
         # Define: Figure title
@@ -3292,6 +3294,8 @@ class NGS:
             title = self.title
         if len(self.datasetTag.replace('[', '').replace(']', '').replace('-', '')) > 40:
             title = title.replace('Register ', 'Register\n')
+        if pca:
+            title = f'{self.enzyme}\n{pca}'
 
         # Print: data
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n'
@@ -3402,6 +3406,8 @@ class NGS:
                     datasetType += '_yMin'
                 if not isinstance(relIteration, bool):
                     datasetType += f'_{relIteration}'
+                if pca:
+                    datasetType += f'-{pca.replace("\n", "-")}'
                 self.saveFigure(fig=fig, figType=datasetType, seqLen=len(data.columns),
                                 combinedMotifs=combinedMotifs)
 
@@ -4855,7 +4861,7 @@ class NGS:
 
 
 
-    def plotSubstratePopulations(self, substrates, clusterIndex, numClusters,
+    def plotSubstratePopulations(self, substrates, probInit, clusterIndex, numClusters,
                                  datasetTag, saveTag):
         print('=============================== Plot PCA Clusters '
               '===============================')
@@ -4866,21 +4872,11 @@ class NGS:
 
         # Define figure titles
         if numClusters == 1:
-            figureTitleEM = (f'\n{inTitleEnrichmentMap}: PCA Population\n'
-                             f'{self.datasetTag}')
-            figureTitleMotif = (f'{inTitleMotif}: PCA Population\n'
-                                f'{self.datasetTag}')
-            figureTitleWordCloud = (f'{inTitleEnrichmentMap}: '
-                                    f'PCA Population\n{self.datasetTag}')
+            figureTitle = f'PCA Population\n{self.datasetTag}'
             datasetTag = f'PCA_Pop-{self.datasetTag}'
         else:
-            figureTitleEM = (
-                f'\n{inTitleEnrichmentMap}: PCA Population {clusterIndex + 1}\n'
-                f'{self.datasetTag}')
-            figureTitleMotif = (f'{inTitleMotif}: PCA Population {clusterIndex + 1}\n'
-                                f'{self.datasetTag}')
-            figureTitleWordCloud = (f'{inTitleEnrichmentMap}: '
-                                    f'PCA Population {clusterIndex + 1}\n{self.datasetTag}')
+            figureTitle = (f'PCA Population {clusterIndex + 1}\n'
+                             f'{self.datasetTag}')
             datasetTag = f'PCA_Pop_{clusterIndex + 1}-{self.datasetTag}'
 
         # Count fixed substrates
@@ -4891,34 +4887,39 @@ class NGS:
         else:
             countsFinal, countsTotalFinal = self.countResidues(substrates=substrates,
                                                               datasetType='')
-        self.sampleSizeUpdate(NSubs=countsTotalFinal, sortType='Final Sort',
-                             datasetTag=self.datasetTag)
+        # self.sampleSizeUpdate(NSubs=countsTotalFinal, sortType='Final Sort',
+        #                      datasetTag=self.datasetTag)
 
         # Adjust the zero counts at nonfixed positions
         countsFinalAdjusted = countsFinal.copy()
-        if inAdjustZeroCounts:
-            for indexColumn in countsFinalAdjusted.columns:
-                for AA in countsFinalAdjusted.index:
-                    if countsFinalAdjusted.loc[AA, indexColumn] == 0:
-                        countsFinalAdjusted.loc[AA, indexColumn] = 1
-            print(f'Adjusted Final Counts:{pink} {self.enzymeName}\n'
-                  f'{red}{countsFinalAdjusted}{resetColor}\n\n')
+        # print(f'Counts:\n{countsFinalAdjusted}\n')
+        # if inAdjustZeroCounts:
+        #     for indexColumn in countsFinalAdjusted.columns:
+        #         for AA in countsFinalAdjusted.index:
+        #             if countsFinalAdjusted.loc[AA, indexColumn] == 0:
+        #                 countsFinalAdjusted.loc[AA, indexColumn] = 1
+        #     print(f'Adjusted Final Counts:{pink} {self.enzymeName}\n'
+        #           f'{red}{countsFinalAdjusted}{resetColor}\n\n')
 
         # Calculate: RF
-        probFinal = self.calculateAAProb(counts=countsFinal, N=countsTotalFinal,
-                                  fileType='Final Sort')
-        probFinalAdjusted = self.calculateAAProb(counts=countsFinalAdjusted, N=countsTotalFinal,
-                                          fileType='Final Sort')
+        probFinal = self.calculateRF(
+            counts=countsFinal, N=countsTotalFinal, fileType='Final Sort'
+        )
+        probFinalAdjusted = self.calculateRF(
+            counts=countsFinalAdjusted, N=countsTotalFinal, fileType='Final Sort'
+        )
 
-        if inPlotEntropyPCAPopulations:
-            # Plot: Positional entropy
-            self.plotEntropy(entropy=self.entropy)
+        # if 0 == 0:
+        #     # Plot: Positional entropy
+        #     self.plotEntropy(entropy=self.entropy)
 
         # Calculate: Enrichment scores
-        fixedFramePopES = self.enrichmentMatrix(initialSortRF=probInitialAvg,
-                                                finalSortRF=probFinal)
-        fixedFramePopESAdjusted = self.enrichmentMatrix(initialSortRF=probInitialAvg,
-                                                        finalSortRF=probFinalAdjusted)
+        fixedFramePopES = self.calculateEnrichment(
+            rfInitial=probInit, rfFinal=probFinal, plotFigures=False
+        )
+        fixedFramePopESAdjusted = self.calculateEnrichment(
+            rfInitial=probInit, rfFinal=probFinalAdjusted, plotFigures=False
+        )
 
         # Calculate: Enrichment scores scaled
         fixedFramePCAESScaled = pd.DataFrame(0.0, index=fixedFramePopES.index,
@@ -4938,24 +4939,13 @@ class NGS:
         yMax = max(fixedFramePCAESScaled[fixedFramePopES > 0].sum())
         yMin = min(fixedFramePCAESScaled[fixedFramePopES < 0].sum())
 
-        # # # Plot data
-        # # Plot: Enrichment Map
-        # self.plotEnrichmentScores(scores=fixedFramePopESAdjusted, dataType='Enrichment',
-        #                           motifFilter=False, duplicateFigure=False,
-        #                           saveTag=datasetTag)
+        # Plot data
+        self.plotEnrichmentScores(dataType='Enrichment', pca=figureTitle)
         #
-        # # Plot: Enrichment Map Scaled
-        # self.plotEnrichmentScores(scores=fixedFramePCAESScaledAdjusted,
-        #                           dataType='Scaled Enrichment')
-        #
-        # # Plot: Sequence Motif
-        # self.plotMotif(data=fixedFramePCAESScaled.copy(), dataType='Scaled Enrichment',
-        #                bigLettersOnTop=inBigLettersOnTop, yMax=yMax, yMin=yMin,
-        #                showYTicks=False, addHorizontalLines=inAddHorizontalLines,
-        #                motifFilter=False, duplicateFigure=False, saveTag=datasetTag)
+        self.plotEnrichmentLogo(pca=figureTitle)
 
         # Plot: Word cloud
-        self.plotWordCloud(substrates=substrates)
+        self.plotWordCloud(substrates=substrates, pca=figureTitle)
 
 
 
@@ -5451,7 +5441,7 @@ class NGS:
 
     def plotWordCloud(self, substrates, clusterNumPCA=None,
                       combinedMotifs=False, predActivity=False,
-                      predModel=False):
+                      predModel=False, pca=False):
         print('=============================== Plot: Word Cloud '
               '================================')
         if clusterNumPCA is not None:
@@ -5488,6 +5478,8 @@ class NGS:
             title = self.titleReleased
         elif combinedMotifs:
             title = self.titleCombined
+        elif pca:
+            title = f'{self.enzyme}\n{pca}'
         else:
             title = self.titleWords
             # title += f'\nTop {totalWords} Substrates'
@@ -5520,7 +5512,10 @@ class NGS:
                 seqLength = len(self.xAxisLabels)
             else:
                 seqLength = self.motifLen
-            self.saveFigure(fig=fig, figType='Words', seqLen=seqLength,
+            datasetType = 'Words'
+            if pca:
+                datasetType += f'-{pca}'
+            self.saveFigure(fig=fig, figType=datasetType, seqLen=seqLength,
                             combinedMotifs=combinedMotifs)
 
 
