@@ -26,8 +26,8 @@ inManualEntropy = False
 inManualFrame = ['R3','R4','R5','R1']
 inFixFullMotifSeq = False
 inMinimumSubstrateCount = 1
-inSetMinimumESFixAA = 0.5
-inSetMinimumESReleaseAA = 0
+inSetMinimumESFixAA = 0
+inSetMinimumESReleaseAA = -1.0
 inPrintFixedSubs = True
 inCombineFixedMotifs = False
 inPredictSubstrateEnrichmentScores = False
@@ -75,8 +75,6 @@ inSetAxisLimits = False
 inDeleteSubstrates = [''] # Delete individual substrates
 inMaxSubstrateCounts = False #3*10**5 # Set a maximum substrate count
 
-x = 'substrates_IDE-F_S5_L001.json'
-y = 'substrates_IDE-IDE-F_S5_L001.json'
 
 
 # =================================== Setup Parameters ===================================
@@ -138,7 +136,6 @@ def fixSubstrate(subs, fixedAA, fixedPosition,
     print(f'Release Filter: {releaseFilter}\n'
           f'Position Filter: {posFilter}\n')
     print(f'Selecting substrates with:{magenta}')
-    datasetTag = ngs.datasetTag
     permitLoad = True
     if releaseFilter and exclude:
         print(f'\n{resetColor}Pos: {posFilter.replace("R", "")}, {excludePosition}')
@@ -402,8 +399,8 @@ def fixFrame(substrates, fixRes, fixPos, exclude, exclRes, exclPos, sortType,
 
     # Delete datapoint
     if not isinstance(deleteSubs, list):
-        deleteSubs = [deleteSubs]
-    if len(deleteSubs) > 0:
+        deleteSubs = list(deleteSubs)
+    if deleteSubs[0]:
         print('=============================== Delete Substrates '
               '===============================')
         print(f'Delete Substrates:')
@@ -883,11 +880,8 @@ rfInitial = ngs.calculateRF(counts=countsInitial, N=countsInitialTotal,
                             fileType='Initial Sort')
 
 # Define: File paths
-(filePathFixedMotifSubs,
- filePathFixedMotifCounts,
- filePathFixedMotifReleasedCounts) = ngs.getFilePath(datasetTag=fixedSubSeq,
-                                                     sortType='FinalSort',
-                                                     motifPath=True)
+filePathFixedMotifSubs, filePathFixedMotifCounts, filePathFixedMotifReleasedCounts = (
+    ngs.getFilePath(datasetTag=fixedSubSeq, sortType='FinalSort', motifPath=True))
 
 # Load the fixed frame if the file can be found
 if (os.path.exists(filePathFixedMotifSubs) and
