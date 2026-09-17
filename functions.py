@@ -97,6 +97,8 @@ def getFileNames(enzyme):
                                   'Mpro2-I_S1_L003', 'Mpro2-I_S1_L004']
         inFileNamesFinalSort = ['Mpro2-R4_S3_L001', 'Mpro2-R4_S3_L002',
                                 'Mpro2-R4_S3_L003', 'Mpro2-R4_S3_L004']
+        inFileNamesInitialSort = ['Mpro2-I_S1_L001']
+        inFileNamesFinalSort = ['Mpro2-R4_S3_L001']
         inAAPositions = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']
     elif enzyme.lower() == 'mpro2-lq':
         enzyme = f'SARS-CoV-2 M{'ᵖʳᵒ'} LQ-NNS'
@@ -6017,18 +6019,20 @@ class NGS:
             data.loc[:, 'Experimental'] = expScores
             data.loc[:, 'Predicted'] = predScores
             print(data)
-            print(f'\nPredict Activity:\n'
+
+            # Spearman rank correlation
+            from scipy.stats import pearsonr, spearmanr
+            rho, pValue = spearmanr(expRank, predRank)
+            rho, pValue = round(rho, 3), round(pValue, 3)
+            print(f'\nSpearman ρ: {rho}, p={pValue}\n')
+
+            print(f'Predicted Activity:\n'
                   f'* Normalized: {colorP}{predScores}{resetColor}\n'
                   f'* Z-Scores:   {colorP}{predScoresZ}{resetColor}\n')
             print(f'Experimental Activity:\n'
                   f'* Experimental: {colorE}{expActivity}{resetColor}\n'
                   f'* Normalized:   {colorE}{expScores}{resetColor}\n'
                   f'* Z-Scores:     {colorE}{expScoresZ}{resetColor}\n')
-
-            # Spearman rank correlation
-            from scipy.stats import pearsonr, spearmanr
-            rho, p = spearmanr(expRank, predRank)
-            print(f'Spearman ρ: {rho:.3f}, p={p:.3f}\n\n')
 
             # Plot prediction matrix
             self.plotMatrix(data=matrix, figLabel='Prediction Matrix', printData=False)
@@ -6047,29 +6051,23 @@ class NGS:
 
             # Make figure
             fig, ax = plt.subplots(figsize=self.figSize)
-            ax.bar(xTicks - barWidth / 2, predVals, barWidth, label='Predicted',
+            ax.bar(xTicks - barWidth / 2, predScoresZ, barWidth, label='Predicted',
                    color=colorPred, edgecolor='black', linewidth=self.lineThickness)
-            ax.bar(xTicks + barWidth / 2, expVals, barWidth, label='Experimental',
+            ax.bar(xTicks + barWidth / 2, expScoresZ, barWidth, label='Experimental',
                    color=colorExp, edgecolor='black', linewidth=self.lineThickness)
-            plt.title(title, fontsize=self.labelSizeTitle, fontweight='bold')
+            plt.title(f'{title}\nSpearman ρ: {rho}',
+                      fontsize=self.labelSizeTitle, fontweight='bold')
             plt.axhline(y=0, color='black', linewidth=self.lineThickness)
-            ax.set_ylabel('Normalized Activity', fontsize=self.labelSizeAxis)
+            ax.set_ylabel('Z-Score', fontsize=self.labelSizeAxis)
             ax.legend(edgecolor='black', linewidth=self.lineThickness, loc='best',
                       prop=FontProperties(weight='bold', size=self.labelSizeTicks - 2))
 
-            # invisibleHandle = Line2D([], [], linestyle='None', marker='None',
-            #                          color='none')
-            # ax.legend(
-            #     handles=[invisibleHandle], labels=['Predicted', 'Experimental'],
-            #     prop=FontProperties(size=self.labelSizeTicks - 2),
-            #     handlelength=0, handletextpad=0, edgecolor='black',
-            #     linewidth=self.lineThickness, loc='upper left', framealpha=0.9
-            # )
-
             # Y-axis
             spacer = 0.2
-            yMax = round(np.ceil(max(np.max(predVals), np.max(expVals)) * 10), 2) / 10
-            yMin = round(np.floor(min(np.min(predVals), np.min(expVals)) * 10), 2) / 10
+            yMax = round(np.ceil(
+                max(max(predScoresZ), max(expScoresZ)) * 10), 2) / 10
+            yMin = round(np.floor(
+                min(min(predScoresZ), min(expScoresZ)) * 10), 2) / 10
             yMax = np.ceil((round(yMax*10,2)/10)+spacer)
             yMin = np.floor((round(yMin*10,2)/10)-spacer)
             plt.ylim(yMin, yMax)
@@ -6107,13 +6105,6 @@ class NGS:
                 # Save figure
                 self.saveFigure(fig=fig, figType=figTag, seqLen=subLen, N=N,
                                 combinedMotifs=combinedMotifs)
-
-
-            # Plot normalized activity scores as a scatter plot
-            x = list(expVals)
-            y = list(activityPred.values())
-            ticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
-
 
             # ============================================================================
             # ============================================================================
@@ -6172,31 +6163,29 @@ class NGS:
                 return xFit, yFit, r2
             # ============================================================================
             # ============================================================================
-
-            x_fit, y_fit, r2 = fitData(x=np.array(x), y=np.array(y))
+            x_fit, y_fit, r2 = fitData(x=np.array(expScoresZ), y=np.array(predScoresZ))
             print(f'R2 exp: {r2:.3f}')
-            # x_fit, y_fit, r2 = fitDataPoly(x=np.array(x), y=np.array(y))
+            # x_fit, y_fit, r2 = fitDataPoly(x=np.array(expScoresZ), y=np.array(y))
             # print(f'R2 poly: {r2:.3f}')
 
             # Try linear first
-            coeffs = np.polyfit(x, y, 1)
-            yPred = np.polyval(coeffs, x)
-            ss_res = np.sum((np.array(y) - yPred) ** 2)
-            ss_tot = np.sum((np.array(y) - np.mean(y)) ** 2)
+            coeffs = np.polyfit(expScoresZ, predScoresZ, 1)
+            yPred = np.polyval(coeffs, expScoresZ)
+            ss_res = np.sum((np.array(predScoresZ) - yPred) ** 2)
+            ss_tot = np.sum((np.array(predScoresZ) - np.mean(predScoresZ)) ** 2)
             r2_linear = 1 - (ss_res / ss_tot)
             print(f'Linear R²: {r2_linear:.3f}')
 
             # Spearman rank correlation
-            rho, p = spearmanr(x, y)
-            print(f'Spearman ρ: {rho:.3f}, p={p:.3f}\n')
+            print(f'Spearman ρ: {rho}, p={pValue}\n')
 
             # Make figure
             fig, ax = plt.subplots(figsize=self.figSize)
             if errorBars:
-                plt.errorbar(x, y, yerr=errorBars, fmt="o",
+                plt.errorbar(expScoresZ, predScoresZ, yerr=errorBars, fmt="o",
                              color=colorExp, ecolor='black')
             else:
-                plt.scatter(x, y, color=colorExp, edgecolor='black')
+                plt.scatter(expScoresZ, predScoresZ, color=colorExp, edgecolor='black')
             ax.plot(x_fit, y_fit, color='black', linestyle='-',
                     linewidth=self.lineThickness)
             plt.xlabel('Experimental Activity', fontsize=self.labelSizeAxis)
@@ -6207,10 +6196,10 @@ class NGS:
 
             # Axis
             spacer = 0.2
-            xMax = self.roundup(max(x) + spacer)
-            xMin = self.roundup(min(x) - spacer, upperLim=False)
-            yMax = self.roundup(max(y) + spacer)
-            yMin = self.roundup(min(y) - spacer, upperLim=False)
+            xMax = self.roundup(max(expScoresZ) + spacer)
+            xMin = self.roundup(min(expScoresZ) - spacer, upperLim=False)
+            yMax = self.roundup(max(predScoresZ) + spacer)
+            yMin = self.roundup(min(predScoresZ) - spacer, upperLim=False)
             plt.xlim(xMin, xMax)
             plt.ylim(yMin, yMax)
 
@@ -6230,7 +6219,8 @@ class NGS:
             invisibleHandle = Line2D([], [], linestyle='None', marker='None',
                                       color='none')
             ax.legend(
-                handles=[invisibleHandle], labels=[f'R² = {r2:.3f}'],
+                handles=[invisibleHandle],
+                labels=[f'R² = {r2:.3f}\nSpearman ρ: {rho}'],
                 prop=FontProperties(size=self.labelSizeTicks - 2, weight='bold'),
                 handlelength=0, handletextpad=0, edgecolor='black',
                 linewidth=self.lineThickness, loc='upper left', framealpha=0.9
