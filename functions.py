@@ -6163,12 +6163,13 @@ class NGS:
                 return xFit, yFit, r2
             # ============================================================================
             # ============================================================================
+            # Fit curve: exponential
             x_fit, y_fit, r2 = fitData(x=np.array(expScoresZ), y=np.array(predScoresZ))
             print(f'R2 exp: {r2:.3f}')
             # x_fit, y_fit, r2 = fitDataPoly(x=np.array(expScoresZ), y=np.array(y))
             # print(f'R2 poly: {r2:.3f}')
 
-            # Try linear first
+            # Fit curve: linear
             coeffs = np.polyfit(expScoresZ, predScoresZ, 1)
             yPred = np.polyval(coeffs, expScoresZ)
             ss_res = np.sum((np.array(predScoresZ) - yPred) ** 2)
@@ -6176,8 +6177,6 @@ class NGS:
             r2_linear = 1 - (ss_res / ss_tot)
             print(f'Linear R²: {r2_linear:.3f}')
 
-            # Spearman rank correlation
-            print(f'Spearman ρ: {rho}, p={pValue}\n')
 
             # Make figure
             fig, ax = plt.subplots(figsize=self.figSize)

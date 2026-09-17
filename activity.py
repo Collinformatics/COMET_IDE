@@ -42,19 +42,19 @@ inExpActivity = [46.1, 49.5, 14.5, 0.0, 13.1, 37.0, 0.0, 16.1]
 inExpActivity2 = [32.1, 39.1, 14.9, 0.0, 16.0, 36.5, 0.0, 15.6]
 # inPredActivity = [0.595, 1.0, 0.008, 0.004, 0.055, 0.417, 0.003, 0.049] # 6 AA
 # inPredActivity2 = [0.748, 1.0, 0.007, 0.009, 0.03, 0.453, 0.005, 0.027] # 6 AA
-inPredActivity = [0.964, 1.0, 0.01, 0.004, 0.055, 0.388, 0.007, 0.009] # 8 AA
+inPredActivity = [0.979, 1.0, 0.032, 0.004, 0.053, 0.313, 0.005, 0.008] # 8 AA
 inPredActivity2 = [0.646, 1.0, 0.007, 0.008, 0.028, 0.493, 0.005, 0.038] # 8 AA
 inStDev = [0.1, 0.09, 0.02, 0, 0.06, 0.09, 0, 0.05]
 inStDev2 = [0.01, 0.058, 0.025, 0.0, 0.027, 0.044, 0.0, 0.033]
 inSubstratesNat = ['AVLQSGFR', 'VTFQSAVK', 'ATVQSKMS', 'ATLQAIAS',
                    'VKLQNNEL', 'VRLQAGNA', 'PMLQSADA', 'TVLQAVGA',
                    'ATLQAENV', 'TRLQSLEN', 'PKLQSSQA']
-inExpActivityNat = [1.000, 0.440, 0.040, 0.350,
-                    0.060, 0.770, 0.330, 0.300,
-                    0.180, 0.210, 0.400]
-inPredActivityNat = [1.000, 0.258, 0.005, 0.151,
-                     0.053, 0.342, 0.149, 0.073,
-                     0.708, 0.124, 0.051]
+inExpActivityNat = [1.0, 0.475, 0.082, 0.459,
+                    0.213, 0.607, 0.361, 0.361,
+                    0.361, 0.459, 0.541]
+inPredActivityNat = [1.0, 0.134, 0.004, 0.071,
+                     0.097, 0.251, 0.262, 0.06,
+                     0.36, 0.071, 0.042]
 # inSubstratesNat = ['AVLQSG', 'VTFQSA', 'ATVQSK', 'ATLQAI',
 #                    'VKLQNN', 'VRLQAG', 'PMLQSA', 'TVLQAV',
 #                    'ATLQAE', 'TRLQSL', 'PKLQSS']
@@ -63,9 +63,9 @@ inPredActivityNat = [1.000, 0.258, 0.005, 0.151,
 #                      0.705, 0.209, 0.2]
 inStDevNat = [0 for _ in range(len(inSubstratesNat))]
 inDatasets = [ # Enzyme name, Substrates, Exp Activity, Exp StDev, Predicted Activity
-    (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
-    (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
-    # (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
+    # (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
+    # (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
+    (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
 ] # Plot this data
 
 # Input: Figures
@@ -176,7 +176,7 @@ def fitData(x, y):
 
     # Fit the curve
     popt, pcov = curve_fit(fnExp, x, y, p0=[1, 1, 0], maxfev=10000)
-    a, b, c = popt
+    # a, b, c = popt
 
     # Generate smooth curve for plotting
     xFit = np.linspace(min(x), max(x), 300)
