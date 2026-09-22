@@ -268,12 +268,12 @@ def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
                                         keepSub = excludeAA(substrate)
                                     if keepSub:
                                         substrateCount += 1
-                                        data.append(SeqRecord(seq=Seq(substrate),
+                                        data.append(SeqRecord(seq=Seq(substrateDNA),
                                                               id=datapoint.id))
                                     if substrateCount == inNumberOfDatapoints:
                                         break
         timeEnd = time.time()
-        timeRun = timeEnd-timeStart
+        timeRun = timeEnd - timeStart
         print(f'Extracted substrates: {red}{substrateCount:,}{resetColor}\n'
               f'Runtime: {round(timeRun, 2):,} s\n')
     if firstRound:
