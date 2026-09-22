@@ -5,38 +5,37 @@ import pandas as pd
 import sys
 import time
 import warnings
-from Bio import SeqIO
-from Bio import BiopythonWarning
+from Bio import BiopythonWarning, SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 
-
-# This script will convert a FASTQ file to a FASTA, or Text file
-# FASTA:
-    # Pros: Contains more information than the .txt file
-    # Cons: Larger file size than .txt
-# Text:
-    # Pros: Lighter file sizes with faster uploads speeds
-    # Cons: Less information than the FASTA, as we only save the substrate sequences
-
+"""
+    This script will convert a FASTQ file to a FASTA, or Text file
+    FASTA:
+        Pros: Contains more information than the .txt file
+        Cons: Larger file size than .txt
+    Text:
+        Pros: Lighter file sizes with faster uploads speeds
+        Cons: Less information than the FASTA, as we only save the substrate sequences
+"""
 
 
 # ===================================== User Inputs ======================================
 # Input 1: File Parameters
-inFileName = [['Mpro2-I_S1_L002_R1_001', 'Mpro2-I_S1_L003_R1_001'],
+inFileName = [['Mpro2-I_S1_L002_R1_001', 'Mpro2-I_S1_L003_R1_001',
+               'Mpro2-I_S1_L004_R1_001'],
               ['Mpro2-R4_S3_L002_R1_001', 'Mpro2-R4_S3_L003_R1_001',
                'Mpro2-R4_S3_L001_R1_001', 'Mpro2-R4_S3_L004_R1_001'],
               'Mpro2-R4_S3_L002_R1_001']
-inFileName = inFileName[0]
+inFileName = inFileName[1]
 inEnzymeName = inFileName[0].split('-')[0] if isinstance(inFileName, list) \
     else inFileName.split('-')[0]
-inBasePath = f'/path/{inEnzymeName}'
-inFASTQPath = os.path.join(inBasePath, 'Fastq')
-inSavePath = os.path.join(inBasePath, f'Data - FromFastq')
-if not os.path.exists(inSavePath):
-    os.makedirs(inSavePath, exist_ok=True)
-inSaveAsText = True # False: save as a larger FASTA file
+inBasePath = f'Data/{inEnzymeName}/'
+inFastqPath = os.path.join(inBasePath, 'Fastq')
+if not os.path.exists(inFastqPath):
+    os.makedirs(inFastqPath, exist_ok=True)
+inSaveAsText = False # False: save data as a FASTA file
 
 # Input 2: Substrate Parameters
 inAAPositions = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']
@@ -44,11 +43,14 @@ inSubstrateLength = len(inAAPositions)
 inShowSampleSize = True # Include the sample size in your figures
 
 # Input 3: Define Variables Used To Extract The Substrates
-inScanRange = True
+inScanRange = False
 inFixResidues = False # True: fix AAs in the substrate
 inFixedResidue = ['Q']
 inFixedPosition = [5]
-inNumberOfDatapoints = 10**6
+inExcludeResidues = True
+inExcludedResidue = ['Q']
+inExcludedPosition = [8]
+inNumberOfDatapoints = 10**4
 inPrintNSubs = 10
 inStartSeqR1 = 'AAAGGCAGT' # Define sequences that flank your substrate
 inEndSeqR1 = 'GGTGGAAGT'
@@ -81,8 +83,31 @@ pd.set_option('display.width', 1000)
 pd.set_option('display.float_format', '{:,.3f}'.format)
 
 
-
 # =================================== Define Functions ===================================
+def fixAA(seq):
+    # inFixedResidue must be a string or a list of strings
+    # inFixedPosition should be a list of integers
+    keep = True
+    for idx, AA in enumerate(inFixedResidue):
+        if isinstance(AA, list) and seq[inFixedPosition[idx]-1] not in AA:
+            keep = False
+        elif seq[inFixedPosition[idx]-1] != AA:
+            keep = False
+    return keep
+
+
+def excludeAA(seq):
+    # inExcludedResidue must be a string or a list of strings
+    # inFixedPosition should be a list of integers
+    keep = True
+    for idx, AA in enumerate(inExcludedResidue):
+        if isinstance(AA, list) and seq[inExcludedPosition[idx]-1] in AA:
+            keep = False
+        elif seq[inExcludedPosition[idx]-1] == AA:
+            keep = False
+    return keep
+
+
 def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
     # Define file locations
     fileLocations = []
@@ -155,19 +180,20 @@ def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
                         QSSub = QS[indexStart:indexEnd]
                         if 'N' not in substrate:
                             if len(substrate) == len(inAAPositions) * 3:
-                                substrate = Seq.translate(substrate)
-                                if '*' not in substrate:
+                                protein = Seq.translate(substrate)
+                                if '*' not in protein:
                                     printData = True
                                     if inFixResidues:
-                                        selectAA = substrate[inFixedPosition[0] - 1]
-                                        if selectAA not in inFixedResidue:
-                                            printData = False
+                                        printData = fixAA(substrate)
+                                    if inExcludeResidues and printData:
+                                        printData = excludeAA(substrate)
                                     if printData:
                                         printN += 1
                                         print(f'DNA: {DNA}\n'
                                               f'QS: {QS}\n'
                                               f'Sub: {greenLight}{substrate}'
                                               f'{resetColor}\n'
+                                              f'AA:  {pink}{protein}{resetColor}\n'
                                               f'QS Sub: {QSSub}\n')
                                         if printN >= inPrintNSubs:
                                             print()
@@ -193,23 +219,23 @@ def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
                     if startSeq in DNA and endSeq in DNA:
                         indexStart = DNA.find(startSeq) + len(startSeq)
                         indexEnd = DNA.find(endSeq)
-                        substrate = DNA[indexStart:indexEnd].strip()
+                        substrateDNA = DNA[indexStart:indexEnd].strip()
                         QSSub = QS[indexStart:indexEnd]
-                        if 'N' not in substrate:
-                            if len(substrate) == len(inAAPositions) * 3:
-                                substrate = Seq.translate(substrate)
+                        if 'N' not in substrateDNA:
+                            if len(substrateDNA) == len(inAAPositions) * 3:
+                                substrate = Seq.translate(substrateDNA)
                                 if '*' not in substrate:
                                     if any(score < 20 for score in QSSub):
                                         continue
 
+                                    keepSub = True
                                     if inFixResidues:
-                                        selectAA = substrate[inFixedPosition[0] - 1]
-                                        if selectAA in inFixedResidue:
-                                            substrateCount += 1
-                                            data.append(substrate)
-                                    else:
+                                        keepSub = fixAA(substrate)
+                                    if inExcludeResidues and printData:
+                                        keepSub = excludeAA(substrate)
+                                    if keepSub:
                                         substrateCount += 1
-                                        data.append(substrate)
+                                        data.append(substrateDNA)
                                     if substrateCount == inNumberOfDatapoints:
                                         break
             else:
@@ -218,27 +244,32 @@ def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
 
                     # Select full DNA seq
                     DNA = str(datapoint.seq)
+                    QS = datapoint.letter_annotations['phred_quality']
 
                     # Extract substrate DNA
                     if startSeq in DNA and endSeq in DNA:
                         indexStart = DNA.find(startSeq) + len(startSeq)
                         indexEnd = DNA.find(endSeq)
-                        substrate = DNA[indexStart:indexEnd].strip()
-                        if len(substrate) == len(inAAPositions) * 3:
-                            substrate = Seq.translate(substrate)
-                            if '*' not in substrate:
-                                if inFixResidues:
-                                    selectAA = substrate[inFixedPosition[0] - 1]
-                                    if selectAA in inFixedResidue:
+                        substrateDNA = DNA[indexStart:indexEnd].strip()
+                        QSSub = QS[indexStart:indexEnd]
+                        if 'N' not in substrateDNA:
+                            if len(substrateDNA) == len(inAAPositions) * 3:
+                                substrate = Seq.translate(substrateDNA)
+                                if '*' not in substrate:
+                                    if any(score < 20 for score in QSSub):
+                                        continue
+
+                                    keepSub = True
+                                    if inFixResidues:
+                                        keepSub = fixAA(substrate)
+                                    if inExcludeResidues and printData:
+                                        keepSub = excludeAA(substrate)
+                                    if keepSub:
                                         substrateCount += 1
-                                        data.append(SeqRecord(seq=substrate,
+                                        data.append(SeqRecord(seq=Seq(substrate),
                                                               id=datapoint.id))
-                                else:
-                                    substrateCount += 1
-                                    data.append(SeqRecord(seq=substrate,
-                                                          id=datapoint.id))
-                                if substrateCount == inNumberOfDatapoints:
-                                    break
+                                    if substrateCount == inNumberOfDatapoints:
+                                        break
         timeEnd = time.time()
         timeRun = timeEnd-timeStart
         print(f'Extracted substrates: {red}{substrateCount:,}{resetColor}\n'
@@ -249,9 +280,9 @@ def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
 
     # Define save location
     if len(loadedFiles) > 1:
-        fileTag = f'{" - ".join(loadedFiles)} - N Seqs'
+        fileTag = f'{" - ".join(loadedFiles)}-N_Seqs'
     else:
-        fileTag = f'{loadedFiles[0]} - N Seqs'
+        fileTag = f'{loadedFiles[0]}-N_Seqs'
     saveLocations.append(os.path.join(savePath, f'{fileTag}.fasta'))
     saveLocationsTxt.append(os.path.join(savePath, f'{fileTag}.txt'))
     if inFixResidues:
@@ -259,9 +290,9 @@ def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
         pathsTxt = []
         for index in range(len(saveLocations)):
             paths.append(saveLocations[index].replace(
-                ' - N Seqs', f' - Fixed {fixedSubSeq} - N Seqs'))
+                '-N_Seqs', f'-Fixed_{fixedSubSeq}-N Seqs'))
             pathsTxt.append(saveLocationsTxt[index].replace(
-                ' - N Seqs', f' - Fixed {fixedSubSeq} - N Seqs'))
+                '-N_Seqs', f'-Fixed_{fixedSubSeq}-N Seqs'))
         saveLocations = paths
         saveLocationsTxt = pathsTxt
 
@@ -270,7 +301,7 @@ def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
     if numDatapoints != 0:
         if inSaveAsText:
             savePath = saveLocationsTxt[0]
-            savePath = savePath.replace('N Seqs', f'N {numDatapoints}')
+            savePath = savePath.replace('N_Seqs', f'N_{numDatapoints}')
             print(f'Saving a{yellow} Text{resetColor} file at: '
                   f'N = {red}{numDatapoints:,}{resetColor}\n'
                   f'     {savePath}\n\n')
@@ -281,7 +312,7 @@ def fastaConversion(filePath, savePath, fileNames, fileType, startSeq, endSeq):
         else:
             numDatapoints = len(data)
             savePath = saveLocations[0]
-            savePath = savePath.replace('N Seqs', f'N {numDatapoints}')
+            savePath = savePath.replace('N_Seqs', f'N_{numDatapoints}')
             print(f'Saving a{yellow} fasta{resetColor} file at: '
                   f'N = {red}{numDatapoints:,}{resetColor}\n'
                   f'     {savePath}\n\n')
@@ -340,10 +371,10 @@ if inScanRange:
 
     for val in range(1, 10):
         inNumberOfDatapoints = val*10**exponent
-        fastaConversion(filePath=inFASTQPath, savePath=inSavePath, fileNames=inFileName,
+        fastaConversion(filePath=inFastqPath, savePath=inSavePath, fileNames=inFileName,
                         fileType='fastq', startSeq=inStartSeqR1, endSeq=inEndSeqR1)
 else:
     print(f'Saving file with N substrates:\n'
           f'     {red}{inNumberOfDatapoints:,}{resetColor}\n')
-    fastaConversion(filePath=inFASTQPath, savePath=inSavePath, fileNames=inFileName,
+    fastaConversion(filePath=inFastqPath, savePath=inSavePath, fileNames=inFileName,
                     fileType='fastq', startSeq=inStartSeqR1, endSeq=inEndSeqR1)
