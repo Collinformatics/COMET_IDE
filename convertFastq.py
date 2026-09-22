@@ -29,7 +29,7 @@ inFileName = [['Mpro2-I_S1_L002_R1_001', 'Mpro2-I_S1_L003_R1_001',
               ['Mpro2-R4_S3_L002_R1_001', 'Mpro2-R4_S3_L003_R1_001',
                'Mpro2-R4_S3_L001_R1_001', 'Mpro2-R4_S3_L004_R1_001'],
               'Mpro2-R4_S3_L002_R1_001']
-inFileName = inFileName[1]
+inFileName = inFileName[0]
 inEnzymeName = inFileName[0].split('-')[0] if isinstance(inFileName, list) \
     else inFileName.split('-')[0]
 inBasePath = f'Data/{inEnzymeName}/'
@@ -52,7 +52,7 @@ inFixedPosition = [5]
 inExcludeResidues = True
 inExcludedResidue = ['Q']
 inExcludedPosition = [8]
-inNumberOfDatapoints = 10**4
+inNumberOfDatapoints = 10**4 # Save N number of sequences
 inPrintNSubs = 10
 inStartSeqR1 = 'AAAGGCAGT' # Define sequences that flank your substrate
 inEndSeqR1 = 'GGTGGAAGT'
