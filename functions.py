@@ -86,17 +86,19 @@ def getFileNames(enzyme):
         inAAPositions = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']
     elif enzyme.lower() == 'mpro' or enzyme.lower() == 'mpro1':
         enzyme = f'SARS-CoV M{'ᵖʳᵒ'}'
-        inFileNamesInitialSort = ['Mpro1-I_S1_L001', 'Mpro1-I_S1_L002',
-                                  'Mpro1-I_S1_L003', 'Mpro1-I_S1_L004']
-        inFileNamesFinalSort = ['Mpro1-R4_S3_L001', 'Mpro1-R4_S3_L002',
-                                'Mpro1-R4_S3_L003', 'Mpro1-R4_S3_L004']
+        # inFileNamesInitialSort = ['Mpro1-I_S1_L001', 'Mpro1-I_S1_L002',
+        #                           'Mpro1-I_S1_L003', 'Mpro1-I_S1_L004']
+        # inFileNamesFinalSort = ['Mpro1-R4_S3_L001', 'Mpro1-R4_S3_L002',
+        #                         'Mpro1-R4_S3_L003', 'Mpro1-R4_S3_L004']
+        inFileNamesInitialSort = ['Mpro-I_S1_L001']
+        inFileNamesFinalSort = ['Mpro-R4_S3_L001']
         inAAPositions = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']
     elif enzyme.lower() == 'mpro2':
         enzyme = f'SARS-CoV-2 M{'ᵖʳᵒ'}'
-        inFileNamesInitialSort = ['Mpro2-I_S1_L001', 'Mpro2-I_S1_L002',
-                                  'Mpro2-I_S1_L003', 'Mpro2-I_S1_L004']
-        inFileNamesFinalSort = ['Mpro2-R4_S3_L001', 'Mpro2-R4_S3_L002',
-                                'Mpro2-R4_S3_L003', 'Mpro2-R4_S3_L004']
+        # inFileNamesInitialSort = ['Mpro2-I_S1_L001', 'Mpro2-I_S1_L002',
+        #                           'Mpro2-I_S1_L003', 'Mpro2-I_S1_L004']
+        # inFileNamesFinalSort = ['Mpro2-R4_S3_L001', 'Mpro2-R4_S3_L002',
+        #                         'Mpro2-R4_S3_L003', 'Mpro2-R4_S3_L004']
         inFileNamesInitialSort = ['Mpro2-I_S1_L001']
         inFileNamesFinalSort = ['Mpro2-R4_S3_L001']
         inAAPositions = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']
@@ -464,7 +466,12 @@ class NGS:
 
 
         # Define file location
-        fileLocation = os.path.join(filePath, f'{fileName}.{fileType}')
+        if not fileName.endswith(fileType):
+            fileName += f'.{fileType}'
+        fileLocation = os.path.join(filePath, f'{fileName}')
+
+        if fileType == 'fasta':
+            printQS = False
 
         # Determine the read direction
         subSequence = None
@@ -523,7 +530,9 @@ class NGS:
                 DNA = Seq(DNA).reverse_complement()
 
             # Get: Quality score
-            QS = datapoint.letter_annotations['phred_quality']
+            QS = []
+            if printQS and 'phred_quality' in datapoint.letter_annotations:
+                QS = datapoint.letter_annotations['phred_quality']
             print(f'DNA sequence: {DNA}')
 
             # Inspect full DNA seq
@@ -531,6 +540,10 @@ class NGS:
                 # Find: Substrate indices
                 start = DNA.find(startSeq) + len(startSeq)
                 end = DNA.find(endSeq)
+                if not startSeq:
+                    start = 0
+                if not endSeq:
+                    end = len(DNA)
 
                 # Extract substrate DNA seq
                 substrateDNA = DNA[start:end].strip()
@@ -562,6 +575,10 @@ class NGS:
                 # Find: Substrate indices
                 start = DNA.find(startSeq) + len(startSeq)
                 end = DNA.find(endSeq)
+                if not startSeq:
+                    start = 0
+                if not endSeq:
+                    end = len(DNA)
 
                 # Extract substrate DNA seq
                 substrate = DNA[start:end].strip()
@@ -572,10 +589,11 @@ class NGS:
                     # Inspect substrate seq: Keep good fixed datapoints
                     if 'X' not in substrate and '*' not in substrate:
                         # Inspect quality score
-                        QS = datapoint.letter_annotations['phred_quality']
-                        QS = QS[start:end]
-                        if any(score < self.minQS for score in QS):
-                            return
+                        if printQS and QS:
+                            QS = datapoint.letter_annotations['phred_quality']
+                            QS = QS[start:end]
+                            if any(score < self.minQS for score in QS):
+                                return
 
                         # Record datapoint
                         if substrate in subSequence:
@@ -590,6 +608,10 @@ class NGS:
                 # Find: Substrate indices
                 start = DNA.find(startSeq) + len(startSeq)
                 end = DNA.find(endSeq)
+                if not startSeq:
+                    start = 0
+                if not endSeq:
+                    end = len(DNA)
 
                 # Extract substrate DNA seq
                 substrate = DNA[start:end].strip()
@@ -600,10 +622,11 @@ class NGS:
                     # Inspect substrate seq: Keep good fixed datapoints
                     if 'X' not in substrate and '*' not in substrate:
                         # Inspect quality score
-                        QS = datapoint.letter_annotations['phred_quality']
-                        QS = QS[start:end]
-                        if any(score < self.minQS for score in QS):
-                            return
+                        if printQS and 'phred_quality' in datapoint.letter_annotations:
+                            QS = datapoint.letter_annotations['phred_quality']
+                            QS = QS[start:end]
+                            if any(score < self.minQS for score in QS):
+                                return
 
                         # Fix AAs
                         keep = True
@@ -696,7 +719,6 @@ class NGS:
                 for datapoint in data:
                     totalSeqsDNA += 1
                     printedSeqs = printDNA(printedSeqs)
-                    print(f'Print: {printedSeqs}, {totalSeqsDNA}')
                     if printedSeqs >= self.printNumber:
                         evaluateDNAQuality(totalSeqsDNA, read)
                         break
@@ -6219,14 +6241,13 @@ class NGS:
                                       color='none')
             ax.legend(
                 handles=[invisibleHandle],
-                labels=[f'R² = {r2:.3f}\nSpearman ρ: {rho}'],
+                labels=[f'R² = {r2:.3f}\nρ: {rho}'],
                 prop=FontProperties(size=self.labelSizeTicks - 2, weight='bold'),
                 handlelength=0, handletextpad=0, edgecolor='black',
                 linewidth=self.lineThickness, loc='upper left', framealpha=0.9
             )
 
             self.plotFig(plt=plt, fig=fig)
-
 
             # Save the Figure
             if self.saveFigures:
@@ -6237,8 +6258,6 @@ class NGS:
                         'ScatterPlot',
                         f'ScatterPlot-{predLabel.replace(' ', '_')}'
                     )
-
-                # Save figure
                 self.saveFigure(fig=fig, figType=figTag, seqLen=subLen, N=N,
                                 combinedMotifs=combinedMotifs)
         plotPredActivity(values=matrix, errorBars=errorBars, tag='Probability Ratios')
