@@ -21,6 +21,7 @@ from Bio.SeqRecord import SeqRecord
 """
 
 
+
 # ===================================== User Inputs ======================================
 # Input 1: File Parameters
 inFileName = [['Mpro2-I_S1_L002_R1_001', 'Mpro2-I_S1_L003_R1_001',
@@ -32,10 +33,11 @@ inFileName = inFileName[1]
 inEnzymeName = inFileName[0].split('-')[0] if isinstance(inFileName, list) \
     else inFileName.split('-')[0]
 inBasePath = f'Data/{inEnzymeName}/'
-inFastqPath = os.path.join(inBasePath, 'Fastq')
-if not os.path.exists(inFastqPath):
-    os.makedirs(inFastqPath, exist_ok=True)
-inSaveAsText = False # False: save data as a FASTA file
+inFastqPath = os.path.join(inBasePath, 'Fastq') # Path to fastq files
+inSavePath = os.path.join(inBasePath, 'Fasta') # Save converted files here
+if not os.path.exists(inSavePath):
+    os.makedirs(inSavePath, exist_ok=True)
+inSaveAsText = False # False: save as a larger FASTA file
 
 # Input 2: Substrate Parameters
 inAAPositions = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8']
