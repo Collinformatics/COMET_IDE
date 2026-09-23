@@ -580,6 +580,11 @@ class NGS:
                 if not endSeq:
                     end = len(DNA)
 
+                # Get: Quality score
+                QS = []
+                if printQS and 'phred_quality' in datapoint.letter_annotations:
+                    QS = datapoint.letter_annotations['phred_quality']
+
                 # Extract substrate DNA seq
                 substrate = DNA[start:end].strip()
                 if len(substrate) == self.substrateLength * 3:
@@ -6136,20 +6141,35 @@ class NGS:
                 return a * np.exp(b * x) + c
 
             def fitData(x, y):
-                # Fit the curve
-                popt, pcov = curve_fit(fnExp, x, y, p0=[1, 1, 0], maxfev=10000)
-                a, b, c = popt
+                x, y = np.array(x, dtype=float), np.array(y, dtype=float)
 
-                # Generate smooth curve for plotting
-                xFit = np.linspace(min(x), max(x), 300)
-                yFit = fnExp(xFit, *popt)
+                # a and c are linear given b, so profile b on a grid to get a real p0
+                def sse(b):
+                    A = np.column_stack([np.exp(b * x), np.ones_like(x)])
+                    coef, *_ = np.linalg.lstsq(A, y, rcond=None)
+                    return np.sum((y - A @ coef) ** 2)
 
-                # R² for the exponential fit
+                grid = np.linspace(0.05, 5.0, 200)
+                b0 = grid[int(np.argmin([sse(b) for b in grid]))]
+                A = np.column_stack([np.exp(b0 * x), np.ones_like(x)])
+                (a0, c0), *_ = np.linalg.lstsq(A, y, rcond=None)
+
+                # bound b away from 0 so the linear ramp is unreachable
+                popt, pcov = curve_fit(fnExp, x, y, p0=[a0, b0, c0],
+                                       bounds=([-np.inf, 1e-3, -np.inf],
+                                               [np.inf, 10.0, np.inf]),
+                                       maxfev=10000)
+
+                if np.any(np.sqrt(np.diag(pcov)) > 100 * np.abs(popt)):
+                    print(f'WARNING: unidentified fit, popt={popt}')
+
                 yPred = fnExp(x, *popt)
                 ss_res = np.sum((y - yPred) ** 2)
                 ss_tot = np.sum((y - np.mean(y)) ** 2)
                 r2 = 1 - (ss_res / ss_tot)
-                return xFit, yFit, r2
+
+                xFit = np.linspace(x.min(), x.max(), 300)
+                return xFit, fnExp(xFit, *popt), r2
 
 
             def fnLog(x, a, b):
