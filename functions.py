@@ -4216,7 +4216,7 @@ class NGS:
         except Exception as exc:
             print(f'{orange}ERROR: The ESM has failed to evaluate your substrates\n\n'
                   f'Exception:\n{exc}\n\n'
-                  f'Suggestion:'
+                  f'Suggestion:\n'
                   f'     Try replacing: {cyan}esm.pretrained.esm2_t36_3B_UR50D()'
                   f'{orange}\n'
                   f'     With: {cyan}esm.pretrained.esm2_t33_650M_UR50D()'
