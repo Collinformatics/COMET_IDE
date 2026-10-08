@@ -1483,8 +1483,6 @@ class NGS:
                     else:
                         for substrate, count in loadedSubs.items():
                             if substrate not in substrates.keys():
-                            #     substrates[substrate] += count
-                            # else:
                                 substrates[substrate] = count
 
                 # Define motif positions and extract the sequence
@@ -3792,8 +3790,8 @@ class NGS:
                               combinedMotifs=combinedMotifs)
             self.plotBarGraph(substrates=motifs, dataType='Counts',
                               combinedMotifs=combinedMotifs, plotAllSubs=True)
-            # self.plotBarGraph(substrates=motifs, dataType='RF',
-            #                   combinedMotifs=combinedMotifs)
+            self.plotBarGraph(substrates=motifs, dataType='RF',
+                              combinedMotifs=combinedMotifs)
 
         # PCA
         if self.plotFigPCA:
@@ -3969,8 +3967,7 @@ class NGS:
 
 
     def plotBarGraph(self, substrates, dataType, barColor='#BF5700',
-                     barWidth=0.75, combinedMotifs=False,
-                     plotAllSubs=False):
+                     barWidth=0.75, combinedMotifs=False, plotAllSubs=False):
         print('================================ Plot: Bar Graph '
               '================================')
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}')
