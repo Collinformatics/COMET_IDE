@@ -454,8 +454,8 @@ class NGS:
 
 
 
-    def loadAndTranslate(self, filePath, fileName, fileType, fixedSubs,
-                         startSeq, endSeq, printQS, forwardRead):
+    def loadAndTranslate(self, filePath, fileName, fileType, fixedSubs, startSeq, endSeq,
+                         printQS, forwardRead):
         if forwardRead is None:
             print(f'{orange}ERROR: The file {cyan}{fileName}{orange} does not contain '
                   f'a forward read (R1) or reverse read (R2) label.\n\n'
@@ -912,8 +912,7 @@ class NGS:
 
 
 
-    def getFilePath(self, datasetTag, sortType, motifPath=False,
-                    customTag=None):
+    def getFilePath(self, datasetTag, sortType, motifPath=False, customTag=None):
         print('============================== Define: File Paths '
               '===============================')
         # Define: File path
@@ -965,8 +964,7 @@ class NGS:
 
 
 
-    def getFilePathCombined(self, sortType, loadSubs=False,
-                            loadCountsRel=False):
+    def getFilePathCombined(self, sortType, loadSubs=False, loadCountsRel=False):
         print('============================== Define: File Paths '
               '===============================')
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n')
@@ -1250,8 +1248,7 @@ class NGS:
 
 
 
-    def loadUnfilteredSubs(self, loadInitial=False, loadFinal=False,
-                           dropColumn=False):
+    def loadUnfilteredSubs(self, loadInitial=False, loadFinal=False, dropColumn=False):
         def loadSubsThread(fileNames, fileType, result):
             subsLoaded, totalSubs = self.loadSubstrates(fileNames=fileNames,
                                                         fileType=fileType,
@@ -1333,9 +1330,8 @@ class NGS:
 
 
 
-    def loadMotifCounts(self, motifLabel, motifIndex,
-                        sortType='FinalSort', returnList=False,
-                        loadCountsRel=True, dropColumn=False):
+    def loadMotifCounts(self, motifLabel, motifIndex, sortType='FinalSort',
+                        returnList=False, loadCountsRel=True, dropColumn=False):
         print('================================ Combine Motifs '
               '=================================')
         initialMotifFrame = self.xAxisLabels[motifIndex[0]:motifIndex[1]]
@@ -1446,8 +1442,8 @@ class NGS:
 
 
 
-    def loadMotifSeqs(self, motifLabel, motifIndex,
-                      loadCountsRel=True, sortType='FinalSort'):
+    def loadMotifSeqs(self, motifLabel, motifIndex,  loadCountsRel=True,
+                      sortType='FinalSort'):
         print('============================ Load: Substrate Motifs '
               '=============================')
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n'
@@ -1647,10 +1643,9 @@ class NGS:
 
 
 
-    def saveSubstrateCSV(self, seqs, initialRF, finalRF, minCounts=100,
-                         seqsBg=False, excludeAA='', maxCountsBg=5,
-                         mod=25, modScale=False, combinedMotifs=False,
-                         chopSeq=False):
+    def saveSubstrateCSV(self, seqs, initialRF, finalRF, minCounts=100, seqsBg=False,
+                         excludeAA='', maxCountsBg=5, mod=25, modScale=False,
+                         combinedMotifs=False, chopSeq=False):
         print('============================== Save Substrate CSV '
               '===============================')
         print(f'Minimum substrate count: {red}{minCounts:,}{resetColor}')
@@ -2022,10 +2017,8 @@ class NGS:
 
 
 
-    def plotBarGraphCSV(self, substrates, dataType,
-                        barColor='#BF5700', barWidth=3,
-                        combinedMotifs=False, minCounts=False,
-                        saveLocation=False):
+    def plotBarGraphCSV(self, substrates, dataType, barColor='#BF5700', barWidth=3,
+                        minCounts=False, saveLocation=False):
         print('================================ Plot: Bar Graph '
               '================================')
         if minCounts:
@@ -2488,10 +2481,8 @@ class NGS:
 
 
 
-    def getDatasetTag(self, useCodonProb=False,
-                      codon=None, combinedMotifs=False):
+    def getDatasetTag(self, useCodonProb=False, codon=None, combinedMotifs=False):
         if combinedMotifs:
-
             continuous, multiCombinedFrames = True, False
             if len(self.fixedPos) == 1:
                 # tags = []
@@ -2508,95 +2499,114 @@ class NGS:
                 else:
                     self.datasetTag = f'{self.fixedAA[0]}@R{self.fixedPos[0]}'
             else:
+                print(f'Dataset TagAA: {purple}{self.datasetTag}{resetColor}')
                 fixedPos, fixedAA = zip(*sorted(zip(self.fixedPos, self.fixedAA)))
                 fixedPos = list(fixedPos)
                 fixedAA = list(fixedAA)
                 # print(f'Fixed Pos: {fixedPos}\n'
                 #       f'Fixed AA:  {fixedAA}\n')
-                for index in range(len(fixedPos) - 1):
-                    # print(f'Idx: {index}')
-                    pos1, pos2 = fixedPos[index], fixedPos[index + 1]
-                    # print(f'Pos:\n'
-                    #       f'     {pos1}\n'
-                    #       f'     {pos2}\n')
-                    if isinstance(pos1, int) and isinstance(pos2, int):
-                        if pos1 == pos2 - 1 or pos1 == pos2 + 1:
+                if len(fixedPos) == 1 and len(fixedAA) == 1:
+                    print(self.fixedPos)
+                    for idx in range(len(self.fixedPos)-1):
+                        pos1, pos2 = self.fixedPos[idx], self.fixedPos[idx + 1]
+                        if pos1 == pos2 - 1:
                             continue
                         else:
-                            if isinstance(pos1, list):
-                                for indexPos in range(len(pos1)-1):
-                                    if (pos1[indexPos] == pos1[indexPos + 1] - 1 or
-                                            pos1[indexPos] == pos1[indexPos + 1] + 1):
-                                        continue
-                                    else:
-                                        continuous = False
-                            else:
-                                continuous = False
-                    elif isinstance(pos1, list) or isinstance(pos2, list):
-                        multiCombinedFrames = True
-                        continue
-                        # Evaluate combined frames with multiple fixed positons
-                        print(f'Pos1: {pos1}')
-                        if isinstance(pos1, list):
-                            for indexPos, posA in enumerate(pos1[:-1]):
-                                posB = pos1[indexPos + 1]
-                                if posB - posA != 1:
-                                    continuous = False
-                                    break
-                        else:
-                            for indexPos, posA in enumerate(pos2[:-1]):
-                                posB = pos2[indexPos + 1]
-                                if posB - posA != 1:
-                                    continuous = False
-                                    break
+                            continuous = False
+                            break
+                    if continuous:
+                        fixedPos = f'R{self.fixedPos[0]}-R{self.fixedPos[-1]}'
                     else:
-                        continuous = False
-                        break
-
-                # Define the tag
-                if continuous:
-                    if multiCombinedFrames:
-                        # Define subtags
-                        fixedAA1 = self.fixedAA[0]
-                        if isinstance(fixedAA1, list):
-                            fixedAA1 = f'[{','.join(fixedAA1)}]'
-                        fixedPos1 = self.fixedPos[0]
-                        if isinstance(fixedPos1, list):
-                            fixedPos1 = f'[{','.join(map(str, fixedPos1))}]'
-                        fixedAA2 = self.fixedAA[-1]
-                        if isinstance(fixedAA2, list):
-                            fixedAA2 = f'[{','.join(fixedAA2)}]'
-                        fixedPos2 = self.fixedPos[-1]
-                        if isinstance(fixedPos2, list):
-                            fixedPos2 = f'[{','.join(map(str, fixedPos2))}]'
-                        # print(f'Fix: {fixedAA1}@R{fixedPos1}')
-                        # print(f'Fix: {fixedAA2}@R{fixedPos2}\n')
-                        self.datasetTag = (f'{fixedAA1}@R{fixedPos1}-'
-                                           f'{fixedAA2}@R{fixedPos2}')
-                    else:
-                        tag = ''
-                        for i in range(len(self.fixedAA)):
-                            fixAA = self.fixedAA[i]
-                            if isinstance(fixAA, list):
-                                fixAA = f'[{','.join(fixAA)}]'
-                            fixPos = self.fixedPos[i]
-                            if tag:
-                                tag += f' {fixAA}@R{fixPos}'
-                            else:
-                                tag = f'{fixAA}@R{fixPos}'
-                        self.datasetTag = tag
+                        fixedPos = f'R[{",".join([str(x) for x in self.fixedPos])}]'
+                    self.datasetTag = f'{self.fixedAA[0]}@{fixedPos}'
                 else:
-                    tags = []
-                    for idx, pos in enumerate(fixedPos):
-                        # print(idx, pos)
-                        aa = fixedAA[idx]
-                        tag = f'{','.join(fixedAA[idx])}@R{pos}'
-                        if isinstance(aa, list):
-                            tag = f'[{','.join(fixedAA[idx])}]@R{pos}'
-                        # print(f'Tag: {tag}')
-                        tags.append(tag)
-                    self.datasetTag = ' '.join(tags)
-                    # print(f'Dataset: {self.datasetTag}\n')
+                    for index in range(len(fixedPos) - 1):
+                        print(f'Dataset Tag A: {purple}{self.datasetTag}{resetColor}')
+                        print(f'Idx: {index}')
+                        pos1, pos2 = fixedPos[index], fixedPos[index + 1]
+                        # print(f'Pos:\n'
+                        #       f'     {pos1}\n'
+                        #       f'     {pos2}\n')
+                        if isinstance(pos1, int) and isinstance(pos2, int):
+                            if pos1 == pos2 - 1 or pos1 == pos2 + 1:
+                                continue
+                            else:
+                                if isinstance(pos1, list):
+                                    for indexPos in range(len(pos1)-1):
+                                        if (pos1[indexPos] == pos1[indexPos + 1] - 1 or
+                                                pos1[indexPos] == pos1[indexPos + 1] + 1):
+                                            continue
+                                        else:
+                                            continuous = False
+                                else:
+                                    continuous = False
+                        elif isinstance(pos1, list) or isinstance(pos2, list):
+                            print(f'Dataset Tag 2: {purple}{self.datasetTag}{resetColor}')
+                            multiCombinedFrames = True
+                            continue
+                            # Evaluate combined frames with multiple fixed positons
+                            print(f'Pos1: {pos1}')
+                            if isinstance(pos1, list):
+                                for indexPos, posA in enumerate(pos1[:-1]):
+                                    posB = pos1[indexPos + 1]
+                                    if posB - posA != 1:
+                                        continuous = False
+                                        break
+                            else:
+                                for indexPos, posA in enumerate(pos2[:-1]):
+                                    posB = pos2[indexPos + 1]
+                                    if posB - posA != 1:
+                                        continuous = False
+                                        break
+                        else:
+                            print(f'Dataset Tag 3: {purple}{self.datasetTag}{resetColor}')
+                            continuous = False
+                            break
+
+                    # Define the tag
+                    if continuous:
+                        if multiCombinedFrames:
+                            # Define subtags
+                            fixedAA1 = self.fixedAA[0]
+                            if isinstance(fixedAA1, list):
+                                fixedAA1 = f'[{','.join(fixedAA1)}]'
+                            fixedPos1 = self.fixedPos[0]
+                            if isinstance(fixedPos1, list):
+                                fixedPos1 = f'[{','.join(map(str, fixedPos1))}]'
+                            fixedAA2 = self.fixedAA[-1]
+                            if isinstance(fixedAA2, list):
+                                fixedAA2 = f'[{','.join(fixedAA2)}]'
+                            fixedPos2 = self.fixedPos[-1]
+                            if isinstance(fixedPos2, list):
+                                fixedPos2 = f'[{','.join(map(str, fixedPos2))}]'
+                            # print(f'Fix: {fixedAA1}@R{fixedPos1}')
+                            # print(f'Fix: {fixedAA2}@R{fixedPos2}\n')
+                            self.datasetTag = (f'{fixedAA1}@R{fixedPos1}-'
+                                               f'{fixedAA2}@R{fixedPos2}')
+                        else:
+                            tag = ''
+                            for i in range(len(self.fixedAA)):
+                                fixAA = self.fixedAA[i]
+                                if isinstance(fixAA, list):
+                                    fixAA = f'[{','.join(fixAA)}]'
+                                fixPos = self.fixedPos[i]
+                                if tag:
+                                    tag += f' {fixAA}@R{fixPos}'
+                                else:
+                                    tag = f'{fixAA}@R{fixPos}'
+                            self.datasetTag = tag
+                    else:
+                        tags = []
+                        for idx, pos in enumerate(fixedPos):
+                            # print(idx, pos)
+                            aa = fixedAA[idx]
+                            tag = f'{','.join(fixedAA[idx])}@R{pos}'
+                            if isinstance(aa, list):
+                                tag = f'[{','.join(fixedAA[idx])}]@R{pos}'
+                            # print(f'Tag: {tag}')
+                            tags.append(tag)
+                        self.datasetTag = ' '.join(tags)
+                        # print(f'Dataset: {self.datasetTag}\n')
 
             # Exclude residues
             if self.excludeAAs:
@@ -3460,8 +3470,8 @@ class NGS:
 
 
 
-    def calculateWeblogo(self, probability, combinedMotifs=False,
-                         relIteration=False, relCounts=False):
+    def calculateWeblogo(self, probability, combinedMotifs=False, relIteration=False,
+                         relCounts=False):
         print('============================= Calculate: Weblogo '
               '================================')
         print(f'Probability: {self.datasetTag}\n{probability}\n\n'
@@ -3481,8 +3491,7 @@ class NGS:
 
 
 
-    def plotWeblogo(self, combinedMotifs=False,
-                    relIteration=False, relCounts=False):
+    def plotWeblogo(self, combinedMotifs=False, relIteration=False, relCounts=False):
         print('================================= Plot: WebLogo '
               '=================================')
         if self.motifFilter:
@@ -3588,8 +3597,7 @@ class NGS:
 
 
 
-    def fixedMotifStats(self, countsList, initialRF,
-                        motifFrame, datasetTag):
+    def fixedMotifStats(self, countsList, initialRF, motifFrame, datasetTag):
         print('================== Statistical Evaluation: Fixed Motif Counts '
               '===================')
         print(f'Count Lists: {len(countsList)}\n{countsList}\n\n')
@@ -3664,8 +3672,7 @@ class NGS:
 
 
 
-    def plotStats(self, data, totalCounts, dataType,
-                  combinedMotifs=False):
+    def plotStats(self, data, totalCounts, dataType, combinedMotifs=False):
         print('========================= Plot: Statistical Evaluation '
               '==========================')
         print(f'{dataType}: {purple}{self.datasetTag}{resetColor}\n{data}\n\n')
@@ -3966,8 +3973,8 @@ class NGS:
 
 
 
-    def plotBarGraph(self, substrates, dataType, barColor='#BF5700',
-                     barWidth=0.75, combinedMotifs=False, plotAllSubs=False):
+    def plotBarGraph(self, substrates, dataType, barColor='#BF5700', barWidth=0.75,
+                     combinedMotifs=False, plotAllSubs=False):
         print('================================ Plot: Bar Graph '
               '================================')
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}')
@@ -4480,8 +4487,8 @@ class NGS:
 
 
 
-    def optimalWord(self, matrix, matrixType, maxResidues, dropPos,
-                    printOptimalAA, normalizeValues):
+    def optimalWord(self, matrix, matrixType, maxResidues, dropPos, printOptimalAA,
+                    normalizeValues):
         print('========================= Synthesize Optimal Substrates '
               '=========================')
 
@@ -4613,8 +4620,7 @@ class NGS:
 
 
 
-    def substrateEnrichment(self, initialSubs, finalSubs,
-                            NSubs, saveData):
+    def substrateEnrichment(self, initialSubs, finalSubs, NSubs, saveData):
         print('========================= Evaluate Substrate Enrichment '
               '=========================')
         if self.datasetTag == None:
@@ -5005,7 +5011,7 @@ class NGS:
         if totalCounts:
             title = f'{enzName}\n{figLabel}\nN={totalCounts:,}'
         else:
-            title = f'{enzName}\n{figLabel}'
+            title = f'{enzName}\n{self.datasetTag}\n{figLabel}'
 
 
         # Plot the heatmap with numbers centered inside the squares
@@ -5091,9 +5097,8 @@ class NGS:
 
 
 
-    def calculateEntropy(self, rf, fixFullFrame=None,
-                         combinedMotifs=False, manualEntropy=False,
-                         manualFrame=None, plotFig=False):
+    def calculateEntropy(self, rf, fixFullFrame=None, combinedMotifs=False,
+                         manualEntropy=False, manualFrame=None, plotFig=False):
         print('============================== Calculate: Entropy '
               '===============================')
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n'
@@ -5371,8 +5376,7 @@ class NGS:
 
 
 
-    def plotPositionalProbDist(self, probability, entropyScores, sortType,
-                               datasetTag):
+    def plotPositionalProbDist(self, probability, entropyScores, sortType, datasetTag):
         print('======================== Plot: Probability Distribution '
               '=========================')
         for position in entropyScores.index:
@@ -5468,9 +5472,8 @@ class NGS:
 
 
 
-    def plotWordCloud(self, substrates, clusterNumPCA=None,
-                      combinedMotifs=False, predActivity=False,
-                      predModel=False, pca=False):
+    def plotWordCloud(self, substrates, clusterNumPCA=None, combinedMotifs=False,
+                      predActivity=False, predModel=False, pca=False):
         print('=============================== Plot: Word Cloud '
               '================================')
         if clusterNumPCA is not None:
@@ -5551,8 +5554,7 @@ class NGS:
 
 
 
-    def findSequence(self, substrates, sequence, sortType,
-                     combinedMotifs=False):
+    def findSequence(self, substrates, sequence, sortType, combinedMotifs=False):
         print('================================= Find Sequence '
               '=================================')
         if 'initial' in sortType.lower():
@@ -5636,8 +5638,7 @@ class NGS:
               f'{resetColor}\n\n')
 
 
-    def findAAInSequence(self, substrates, AA, idxPos, sortType,
-                         combinedMotifs=False):
+    def findAAInSequence(self, substrates, AA, idxPos, sortType, combinedMotifs=False):
         print('================================= Find Sequence '
               '=================================')
         idxPos -= 1 # Adjust index
@@ -5703,8 +5704,7 @@ class NGS:
 
 
 
-    def generateSubstrates(self, df, eMap, minES, dataType,
-                           subsReq={}, filter={}):
+    def generateSubstrates(self, df, eMap, minES, dataType, subsReq={}, filter={}):
         print('============================== Generate Substrates '
               '==============================')
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n'
@@ -5872,8 +5872,7 @@ class NGS:
 
 
 
-    def normalizeProbRatios(self, finalRF, initialRF,
-                            pData=True, pHeader=True):
+    def normalizeProbRatios(self, finalRF, initialRF, pData=True, pHeader=True):
         if pData:
             if pHeader:
                 print('========================= Normalize Probability Ratios '
@@ -5908,16 +5907,16 @@ class NGS:
 
 
 
-    def predictActivity(self, activityExp, finalRF, initialRF, predModel,
-                        predLabel, errorBars=False, combinedMotifs=False,
-                        barWidth=0.35, colorExp='#BF5700',
-                        colorPred='#F8971F', rotateLabel=45):
+    def predictActivity(self, activityExp, finalRF, initialRF, predModel, predLabel,
+                        errorBars=False, combinedMotifs=False, barWidth=0.35,
+                        colorExp='#BF5700', colorPred='#F8971F', rotateLabel=45):
         print('============================ Predict Substrate Activity '
               '=============================')
         N = len(activityExp.keys())
-        print(f'Dataset: {purple}{predModel}{resetColor}\n'
-              f'Evaluating: {purple}{predLabel}{resetColor}\n'
-              f'N Substrate Sequences: {red}{N:,}{resetColor}\n')
+        print(f'Dataset: {purple}{predModel}{resetColor}')
+        if predLabel:
+            print(f'Evaluating: {purple}{predLabel}{resetColor}')
+        print(f'N Substrate Sequences: {red}{N:,}{resetColor}\n')
 
         # Get prediction matrix
         matrix = self.normalizeProbRatios(finalRF=finalRF,
@@ -5946,13 +5945,10 @@ class NGS:
         # self.calculateEntropy(rf=matrix, plotFig=True)
 
 
-        def plotPredActivity(values, errorBars, tag):
-            colorP, colorE = red, blue
-
+        def plotPredActivity(values, errorBars, tag, colorP=red, colorE=blue):
             # Calculate: Activity
             activityPred = {}
-            subLen = len(next(iter(activityExp)))
-            neutral = 1 / len(values.index)
+            subLen = len(values.columns)
             spacerMax = max([len(pos) for pos in values.columns])
             for substrate in activityExp.keys():
                 print(f'{pink}{substrate}{resetColor}')
@@ -6119,7 +6115,7 @@ class NGS:
             # Save the Figure
             if self.saveFigures:
                 # Define: Save location
-                figTag = f'PredActivity-BarGraph-{predModel}'
+                figTag = f'PredActivity-BarGraph'
                 if predLabel:
                     figTag = figTag.replace(
                         'BarGraph',
@@ -6258,7 +6254,7 @@ class NGS:
                                       color='none')
             ax.legend(
                 handles=[invisibleHandle],
-                labels=[f'R² = {r2:.3f}\nρ: {rho}'],
+                labels=[f'R² = {r2:.3f}, ρ: {rho}'],
                 prop=FontProperties(size=self.labelSizeTicks - 2, weight='bold'),
                 handlelength=0, handletextpad=0, edgecolor='black',
                 linewidth=self.lineThickness, loc='upper left', framealpha=0.9
@@ -6269,7 +6265,7 @@ class NGS:
             # Save the Figure
             if self.saveFigures:
                 # Define: Save location
-                figTag = f'PredActivity-ScatterPlot-{predModel}'
+                figTag = f'PredActivity-ScatterPlot'
                 if predLabel:
                     figTag = figTag.replace(
                         'ScatterPlot',
