@@ -126,9 +126,8 @@ countsInitial, countsInitialTotal = ngs.loadCounts(filter=False, fileType='Initi
 
 
 # =================================== Define Functions ===================================
-def fixSubstrate(subs, fixedAA, fixedPosition,
-                 exclude, excludeAA, excludePosition, sortType,
-                 posFilter=False, releaseFilter=False):
+def fixSubstrate(subs, fixedAA, fixedPosition, exclude, excludeAA, excludePosition,
+                 sortType, posFilter=False, releaseFilter=False):
     print('================================ Fix Substrates '
           '=================================')
     print(f'Substrate Dataset:'
@@ -388,8 +387,8 @@ def verifyList(data):
 
 
 
-def fixFrame(substrates, fixRes, fixPos, exclude, exclRes, exclPos, sortType,
-             datasetTag, deleteSubs):
+def fixFrame(substrates, fixRes, fixPos, exclude, exclRes, exclPos, sortType, datasetTag,
+             deleteSubs):
     fixRes = verifyList(fixRes)
     fixPos = verifyList(fixPos)
     fixPos = [fixPos[i] for i in range(len(fixRes))]
@@ -721,9 +720,8 @@ def fixFrame(substrates, fixRes, fixPos, exclude, exclRes, exclPos, sortType,
 
 
 
-def releaseCounts(substrates, countsFiltered, sortType, keepResidues,
-                  keepPositions, exclResidues, exclPositions,
-                  exclude=False):
+def releaseCounts(substrates, countsFiltered, sortType, keepResidues, keepPositions,
+                  exclResidues, exclPositions, exclude=False):
     print('================================ Release Counts '
           '=================================')
     print(f'Filter:{purple}')
