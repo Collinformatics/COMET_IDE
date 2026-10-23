@@ -317,7 +317,7 @@ class NGS:
         # Set options
         pd.set_option('display.max_columns', None)
         pd.set_option('display.width', 1000)
-        pd.options.display.float_format = '{:,.4f}'.format
+        pd.options.display.float_format = '{:,.3f}'.format
 
 
 
@@ -499,7 +499,6 @@ class NGS:
         totalSeqsDNA = 0
         printedSeqs = 0
 
-
         # Evaluate the file path
         gZipped = False
         if not os.path.isfile(path):
@@ -569,7 +568,7 @@ class NGS:
             return printedSeqs
 
 
-        def inspectDNA():
+        def inspectDNA(forward):
             # Inspect full DNA seq
             if startSeq in DNA and endSeq in DNA:
                 # Find: Substrate indices
@@ -596,6 +595,8 @@ class NGS:
                         # Inspect quality score
                         if printQS and QS:
                             QS = datapoint.letter_annotations['phred_quality']
+                            if not forward:
+                                QS = QS[::-1]
                             QS = QS[start:end]
                             if any(score < self.minQS for score in QS):
                                 return
@@ -607,7 +608,7 @@ class NGS:
                             subSequence[substrate] = 1
 
 
-        def inspectDNAFixed():
+        def inspectDNAFixed(forward):
             # Inspect full DNA seq
             if startSeq in DNA and endSeq in DNA:
                 # Find: Substrate indices
@@ -629,6 +630,8 @@ class NGS:
                         # Inspect quality score
                         if printQS and 'phred_quality' in datapoint.letter_annotations:
                             QS = datapoint.letter_annotations['phred_quality']
+                            if not forward:
+                                QS = QS[::-1]
                             QS = QS[start:end]
                             if any(score < self.minQS for score in QS):
                                 return
@@ -687,19 +690,21 @@ class NGS:
 
                 # Extract the substrates
                 totalSeqsDNA = 0
+                file.seek(0)
+                data = SeqIO.parse(file, fileType)
                 if forwardRead:
                     if fixData:
                         for datapoint in data:
                             # Select full DNA seq
                             DNA = str(datapoint.seq)
                             totalSeqsDNA += 1
-                            inspectDNAFixed()
+                            inspectDNAFixed(forwardRead)
                     else:
                         for datapoint in data:
                             # Select full DNA seq
                             DNA = str(datapoint.seq)
                             totalSeqsDNA += 1
-                            inspectDNA()
+                            inspectDNA(forwardRead)
                 else:
                     if fixData:
                         for datapoint in data:
@@ -707,14 +712,14 @@ class NGS:
                             DNA = str(datapoint.seq)
                             DNA = Seq(DNA).reverse_complement()
                             totalSeqsDNA += 1
-                            inspectDNAFixed()
+                            inspectDNAFixed(forwardRead)
                     else:
                         for datapoint in data:
                             # Select full DNA seq
                             DNA = str(datapoint.seq)
                             DNA = Seq(DNA).reverse_complement()
                             totalSeqsDNA += 1
-                            inspectDNA()
+                            inspectDNA(forwardRead)
         else:
             # Open the file
             with open(path, 'r') as file:
@@ -741,13 +746,13 @@ class NGS:
                             # Select full DNA seq
                             DNA = str(datapoint.seq)
                             totalSeqsDNA += 1
-                            inspectDNAFixed()
+                            inspectDNAFixed(forwardRead)
                     else:
                         for datapoint in data:
                             # Select full DNA seq
                             DNA = str(datapoint.seq)
                             totalSeqsDNA += 1
-                            inspectDNA()
+                            inspectDNA(forwardRead)
                 else:
                     if fixData:
                         for datapoint in data:
@@ -755,14 +760,14 @@ class NGS:
                             DNA = str(datapoint.seq)
                             DNA = Seq(DNA).reverse_complement()
                             totalSeqsDNA += 1
-                            inspectDNAFixed()
+                            inspectDNAFixed(forwardRead)
                     else:
                         for datapoint in data:
                             # Select full DNA seq
                             DNA = str(datapoint.seq)
                             DNA = Seq(DNA).reverse_complement()
                             totalSeqsDNA += 1
-                            inspectDNA()
+                            inspectDNA(forwardRead)
 
 
         # Verify if substrates have been extracted
@@ -1187,9 +1192,13 @@ class NGS:
         # Function to load each file
         def loadFile(fileName):
             fileLocation = os.path.join(self.pathData, f'substrates_{fileName}.json')
+            fileLocation = os.path.join(self.pathData, f'substrates_{fileName}.pkl') ###
             print(f'File path:\n     {greenDark}{fileLocation}{resetColor}\n')
-            with open(fileLocation, 'r') as openedFile:  # Open file
-                data = json.load(openedFile) # Access the data
+            import pickle as pk
+            with open(fileLocation, 'rb') as openedFile:  # Open file
+                data = pk.load(openedFile) # Access the data
+            # with open(fileLocation, 'r') as openedFile:  # Open file
+            #     data = json.load(openedFile) # Access the data
                 dataTotalSubs = sum(data.values())
                 print(f'     Total substrates in {greenLightB}{fileName}{resetColor}: '
                       f'{red}{dataTotalSubs:,}{resetColor}\n')
@@ -1627,7 +1636,7 @@ class NGS:
         subs = dict(sorted(subs.items(), key=lambda x: x[1], reverse=True))
         print('Substrates:')
         for i, (sub, count) in enumerate(subs.items()):
-            print(f'    {blue}{sub}{resetColor}: Counts: {red}{count:,}{resetColor}')
+            print(f'    {blue}{sub}{resetColor}, Counts: {red}{count:,}{resetColor}')
             if i >= self.printNumber:
                 break
         print('\n')
@@ -2335,8 +2344,8 @@ class NGS:
                               f'{self.datasetTagMotif}')
         if self.showSampleSize:
             self.title = (f'{enzName}\n'
-                          f'N Unsorted = {self.nSubsInitial:,}\n'
-                          f'N Sorted = {self.nSubsFinal:,}')
+                          f'N Experimental = {self.nSubsFinal:,}\n'
+                          f'N Background = {self.nSubsInitial:,}')
             self.titleWeblogo = f'{enzName}\nN = {self.nSubsFinal:,}'
 
         else:
@@ -2469,7 +2478,7 @@ class NGS:
             print(f'Dataset: {purple}{self.enzymeName} - {fileType}{resetColor}\n')
 
         # Calculate: Probability
-        rf = counts / N
+        rf = counts.div(counts.sum(axis=0), axis=1)
         print(f'{np.round(rf, 4)}\n\n')
 
         if calcAvg:
@@ -2499,14 +2508,12 @@ class NGS:
                 else:
                     self.datasetTag = f'{self.fixedAA[0]}@R{self.fixedPos[0]}'
             else:
-                print(f'Dataset TagAA: {purple}{self.datasetTag}{resetColor}')
                 fixedPos, fixedAA = zip(*sorted(zip(self.fixedPos, self.fixedAA)))
                 fixedPos = list(fixedPos)
                 fixedAA = list(fixedAA)
                 # print(f'Fixed Pos: {fixedPos}\n'
                 #       f'Fixed AA:  {fixedAA}\n')
                 if len(fixedPos) == 1 and len(fixedAA) == 1:
-                    print(self.fixedPos)
                     for idx in range(len(self.fixedPos)-1):
                         pos1, pos2 = self.fixedPos[idx], self.fixedPos[idx + 1]
                         if pos1 == pos2 - 1:
@@ -2521,8 +2528,6 @@ class NGS:
                     self.datasetTag = f'{self.fixedAA[0]}@{fixedPos}'
                 else:
                     for index in range(len(fixedPos) - 1):
-                        print(f'Dataset Tag A: {purple}{self.datasetTag}{resetColor}')
-                        print(f'Idx: {index}')
                         pos1, pos2 = fixedPos[index], fixedPos[index + 1]
                         # print(f'Pos:\n'
                         #       f'     {pos1}\n'
@@ -2541,11 +2546,9 @@ class NGS:
                                 else:
                                     continuous = False
                         elif isinstance(pos1, list) or isinstance(pos2, list):
-                            print(f'Dataset Tag 2: {purple}{self.datasetTag}{resetColor}')
                             multiCombinedFrames = True
                             continue
                             # Evaluate combined frames with multiple fixed positons
-                            print(f'Pos1: {pos1}')
                             if isinstance(pos1, list):
                                 for indexPos, posA in enumerate(pos1[:-1]):
                                     posB = pos1[indexPos + 1]
@@ -2559,7 +2562,6 @@ class NGS:
                                         continuous = False
                                         break
                         else:
-                            print(f'Dataset Tag 3: {purple}{self.datasetTag}{resetColor}')
                             continuous = False
                             break
 
@@ -3075,20 +3077,19 @@ class NGS:
         if self.releasedCounts:
             print(f'Enrichment Score: {purple}Substrate Profile{resetColor}\n'
                   f'{matrix.round(self.roundVal)}\n\n')
-            print(f'Prob Initial:\n{rfInitial}\n\n'
-                  f'Prob Final:\n{rfFinal}\n\n')
         else:
             print(f'Enrichment Score: {purple}{self.datasetTag}{resetColor}\n'
                   f'{matrix.round(self.roundVal)}\n\n')
 
-        print('====================== Calculate: Scaled Enrichment Score '
-              '=======================')
-        if self.releasedCounts:
-            print(f'Scale Enrichment Scores: {purple}Substrate Profile{resetColor}\n'
-                  f'     {magenta}Enrichment Scores * ΔS{resetColor}')
-        else:
-            print(f'Scale Enrichment Scores:\n'
-                  f'     {magenta}Enrichment Scores * ΔS{resetColor}')
+        ###
+        # print('====================== Calculate: Scaled Enrichment Score '
+        #       '=======================')
+        # if self.releasedCounts:
+        #     print(f'Scale Enrichment Scores: {purple}Substrate Profile{resetColor}\n'
+        #           f'     {magenta}Enrichment Scores * ΔS{resetColor}')
+        # else:
+        #     print(f'Scale Enrichment Scores:\n'
+        #           f'     {magenta}Enrichment Scores * ΔS{resetColor}')
 
         # if self.releasedCounts:
         #     print(f'Set Values: Fraud!!!')
@@ -3208,6 +3209,7 @@ class NGS:
             title = title.replace('Register ', 'Register\n')
         if pca:
             title = f'{self.enzyme}\n{pca}'
+        # title = f'{self.enzymeName}\nSpecificity Landscape'
 
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n'
              f'Unique Substrates: {red}{self.nSubsFinalUniqueSeqs:,}{resetColor}')
@@ -3337,6 +3339,7 @@ class NGS:
             title = title.replace('Register ', 'Register\n')
         if pca:
             title = f'{self.enzyme}\n{pca}'
+        # title = f'{self.enzymeName}\nSpecificity Landscape'
 
         # Print: data
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n'
@@ -3693,7 +3696,7 @@ class NGS:
             else:
                 title = f'{enzName}\n{self.datasetTag}'
             # title += f'\n{dataType}'
-
+        # title = f'{self.enzymeName}\nSpecificity Landscape'
 
         # Create heatmap
         cMapCustom = self.createCustomColorMap(colorType=dataType)
@@ -3956,7 +3959,7 @@ class NGS:
               '==========================')
         print(f'Dataset: {purple}{self.datasetTag}{resetColor}\n')
 
-        # Set: xValues 
+        # Set: xValues
         x = np.arange(0, len(y))
         smoothx = np.linspace(x[0], x[-1], 20)
 
@@ -5145,9 +5148,10 @@ class NGS:
             title = f'{enzName}'
         if self.releasedCounts:
             title = self.titleReleased
-        if combinedMotifs and not self.releasedCounts:
+        if combinedMotifs and not self.motifFilter:
             title = title.replace(self.datasetTag,
                                   f'Combined Filter\n{self.datasetTag}')
+            # title = f'{self.enzymeName}\nSpecificity Landscape'
         if (len(self.datasetTag) > 50 and self.datasetTag in title and
                 'exclude' in title.lower() and 'fixed' in title.lower()):
             title = f'{enzName}\n{self.datasetTag.replace('Fixed', '\nFixed')}'
@@ -5289,9 +5293,9 @@ class NGS:
             if codonType == datasetTag:
                 title = f'\n\n{codonType} Codon'
             elif 'initial' in sortType.lower():
-                title = f'\n{enzName}\nUnsorted Library'
+                title = f'\n{enzName}\nBackground Library'
             else:
-                title = f'\n{enzName}\nSorted Library'
+                title = f'\n{enzName}\nExperimental Library'
 
             fig, ax = plt.subplots(figsize=self.figSize)
             plt.ylabel('Relative Frequency', fontsize=self.labelSizeAxis)
@@ -5767,8 +5771,8 @@ class NGS:
         print('\n')
 
         return genSubstrates, addedAAsTag
-    
-    
+
+
     def normalizeValues(self, substrates, datasetTag):
         print(f'=============================== Normalize Values '
               f'===============================')
@@ -5981,6 +5985,12 @@ class NGS:
             ranked = pd.Series(activityPred.values()).rank(
                 ascending=False, method='min').astype(int)
 
+            print(f'\nSeq Activity:')
+            s = []
+            for seq, score in activityPred.items():
+                s.append((seq, score))
+            print(f'{s}\n')
+
 
             dec = self.roundVal - 1
             maxActivity = max(activityPred.values())
@@ -6008,6 +6018,7 @@ class NGS:
 
             # Normalize values
             activityExpNorm, maxExpActivity = {}, max(activityExp.values())
+            print(f'Max: {maxExpActivity}')
             activityPredNorm = {}
             for index, (substrate, activity) in enumerate(activityPred.items()):
                 activityPredNorm[substrate] = activity / maxActivity
@@ -6062,6 +6073,7 @@ class NGS:
             title = f'{enzName}\nSubstrate Activity'
             if predLabel:
                 title += f'\n{predLabel}'
+            # title = f'{self.enzymeName}\nSpecificity Landscape'
 
             # Plot bar graph
             labels = list(activityPred.keys())
@@ -6162,7 +6174,7 @@ class NGS:
                 r2 = 1 - (ss_res / ss_tot)
 
                 xFit = np.linspace(x.min(), x.max(), 300)
-                return xFit, fnExp(xFit, *popt), r2
+                return xFit, fnExp(xFit, *popt), r2, popt
 
 
             def fnLog(x, a, b):
@@ -6181,7 +6193,7 @@ class NGS:
                 ss_res = np.sum((np.array(y) - yPred) ** 2)
                 ss_tot = np.sum((np.array(y) - np.mean(y)) ** 2)
                 r2 = 1 - (ss_res / ss_tot)
-                return xFit, yFit, r2
+                return xFit, yFit, r2, popt
 
 
             def fnPoly(x, a, b, c):
@@ -6199,8 +6211,12 @@ class NGS:
             # ============================================================================
             # ============================================================================
             # Fit curve: exponential
-            x_fit, y_fit, r2 = fitData(x=np.array(expScoresZ), y=np.array(predScoresZ))
-            print(f'R2 exp: {r2:.3f}')
+            x_fit, y_fit, r2, popt_exp = fitData(x=np.array(expScoresZ), y=np.array(predScoresZ))
+            print(f'R²: exp: {r2:.3f}')
+            # x_fit, y_fit, fitCurve, popt_exp = fitData(x=x, y=y)
+            a, b, c = popt_exp # y = a · e^(b·x) + c
+            print(f'Fitting data to an exponential curve:\n'
+                  f'  y = {round(a,2)} * e^({round(b,2)}·x) + {round(c,2)}\n')
             # x_fit, y_fit, r2 = fitDataPoly(x=np.array(expScoresZ), y=np.array(y))
             # print(f'R2 poly: {r2:.3f}')
 
@@ -6210,7 +6226,7 @@ class NGS:
             ss_res = np.sum((np.array(predScoresZ) - yPred) ** 2)
             ss_tot = np.sum((np.array(predScoresZ) - np.mean(predScoresZ)) ** 2)
             r2_linear = 1 - (ss_res / ss_tot)
-            print(f'Linear R²: {r2_linear:.3f}')
+            print(f'Linear R²: {r2_linear:.3f}\n')
 
 
             # Make figure
