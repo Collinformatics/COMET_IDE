@@ -5955,11 +5955,12 @@ class NGS:
                     # y = value
                     y = np.log2(value)
                     spacer = (spacerMax - len(pos)) * ' '
+                    spacer2 = '' if x < 0 else ' '
                     print(f'* {blue}{AA}@{pos}{resetColor}:{spacer} '
                           f'ER: {purple}{value:.4f}{resetColor}, '
                           f'∆S: {S:.4f}, '
-                          f'Adj: {greenLight}{x:.4f}{resetColor}, '
-                          f'ER/Adj: {red}{y:.4f}{resetColor}')
+                          f'X: {greenLight}{x:.4f}{resetColor},{spacer2} '
+                          f'Y: {red}{y:.4f}{resetColor}')
                     if score == 0:
                         score = y
                     else:
