@@ -1192,13 +1192,13 @@ class NGS:
         # Function to load each file
         def loadFile(fileName):
             fileLocation = os.path.join(self.pathData, f'substrates_{fileName}.json')
-            fileLocation = os.path.join(self.pathData, f'substrates_{fileName}.pkl') ###
+            # fileLocation = os.path.join(self.pathData, f'substrates_{fileName}.pkl') ###
             print(f'File path:\n     {greenDark}{fileLocation}{resetColor}\n')
-            import pickle as pk
-            with open(fileLocation, 'rb') as openedFile:  # Open file
-                data = pk.load(openedFile) # Access the data
-            # with open(fileLocation, 'r') as openedFile:  # Open file
-            #     data = json.load(openedFile) # Access the data
+            # import pickle as pk
+            # with open(fileLocation, 'rb') as openedFile:  # Open file
+            #     data = pk.load(openedFile) # Access the data
+            with open(fileLocation, 'r') as openedFile:  # Open file
+                data = json.load(openedFile) # Access the data
                 dataTotalSubs = sum(data.values())
                 print(f'     Total substrates in {greenLightB}{fileName}{resetColor}: '
                       f'{red}{dataTotalSubs:,}{resetColor}\n')
@@ -3081,21 +3081,6 @@ class NGS:
             print(f'Enrichment Score: {purple}{self.datasetTag}{resetColor}\n'
                   f'{matrix.round(self.roundVal)}\n\n')
 
-        ###
-        # print('====================== Calculate: Scaled Enrichment Score '
-        #       '=======================')
-        # if self.releasedCounts:
-        #     print(f'Scale Enrichment Scores: {purple}Substrate Profile{resetColor}\n'
-        #           f'     {magenta}Enrichment Scores * ΔS{resetColor}')
-        # else:
-        #     print(f'Scale Enrichment Scores:\n'
-        #           f'     {magenta}Enrichment Scores * ΔS{resetColor}')
-
-        # if self.releasedCounts:
-        #     print(f'Set Values: Fraud!!!')
-        #     matrix.loc['G', 'R4'] = -0.556
-        #     matrix.loc['S', 'R4'] = -0.762
-        #     matrix.loc['R', 'R5'] = -0.352
 
         # Calculate: Letter heights
         heights = pd.DataFrame(0, index=matrix.index,
@@ -5877,6 +5862,7 @@ class NGS:
 
 
     def normalizeProbRatios(self, finalRF, initialRF, pData=True, pHeader=True):
+        pd.options.display.float_format = '{:,.5f}'.format
         if pData:
             if pHeader:
                 print('========================= Normalize Probability Ratios '
@@ -5927,21 +5913,22 @@ class NGS:
                                           initialRF=initialRF,
                                           pHeader=False)
 
-        entropy = pd.DataFrame(0.0, index=matrix.columns, columns=['ΔS'])
-        entropyMax = np.log2(len(matrix.index))
-        for indexColumn in matrix.columns:
-            S = 0
-            for indexRow, probRatio in matrix.iterrows():
-                prob = probRatio[indexColumn]
-                if prob == 0:
-                    continue
-                else:
-                    S += -prob * np.log2(prob)
-            entropy.loc[indexColumn, 'ΔS'] = entropyMax - S
-        maxS = max(entropy.iloc[:, 0])
-        for pos in entropy.index:
-            entropy.loc[pos, 'ΔS'] = entropy.loc[pos, 'ΔS'] / maxS
-        print(f'{entropy}\n\n')
+        # entropy = pd.DataFrame(0.0, index=matrix.columns, columns=['ΔS'])
+        # entropyMax = np.log2(len(matrix.index))
+        # for indexColumn in matrix.columns:
+        #     S = 0
+        #     for indexRow, probRatio in matrix.iterrows():
+        #         prob = probRatio[indexColumn]
+        #         if prob == 0:
+        #             continue
+        #         else:
+        #             S += -prob * np.log2(prob)
+        #     entropy.loc[indexColumn, 'ΔS'] = entropyMax - S
+        # maxS = max(entropy.iloc[:, 0])
+        # for pos in entropy.index:
+        #     entropy.loc[pos, 'ΔS'] = entropy.loc[pos, 'ΔS'] / maxS
+        # print(f'Normalized Entropy:\n{entropy}\n\n')
+        entropy = self.entropy.copy()
 
         # for pos in matrix.columns:
         #     matrix.loc[:, pos] = matrix.loc[:, pos] * entropy.loc[pos, 'ΔS']
@@ -5964,32 +5951,31 @@ class NGS:
                     value = values.loc[AA, pos]
                     S = entropy.loc[pos, 'ΔS']
                     x = S ** value
-                    # y = value # R2: 0.622, 0.980
-                    # y = value / (S ** value) # R2: 0.671, 0.978
-                    y = value / x
+                    # y = value
+                    y = np.log2(value)
                     spacer = (spacerMax - len(pos)) * ' '
                     print(f'* {blue}{AA}@{pos}{resetColor}:{spacer} '
                           f'ER: {purple}{value:.4f}{resetColor}, '
                           f'∆S: {S:.4f}, '
                           f'Adj: {greenLight}{x:.4f}{resetColor}, '
                           f'ER/Adj: {red}{y:.4f}{resetColor}')
-                    # print(f'* {blue}{AA}@{pos}{resetColor} ({round(S, 4)}): '
-                    #       f'{round(value, 4)} -> {round(x, 4)}')
-                    # print(f'* {blue}{AA}@{pos}{resetColor}: {round(value,4)}')
                     if score == 0:
                         score = y
                     else:
-                        score *= y
+                        # score *= y
+                        score += y
+                # print(f'Score: {colorP}{score:.3e}{resetColor}')
+                # score = np.exp(score)
                 print(f'Score: {colorP}{score:.3e}{resetColor}\n')
                 activityPred[substrate] = float(score)
             ranked = pd.Series(activityPred.values()).rank(
                 ascending=False, method='min').astype(int)
 
-            print(f'\nSeq Activity:')
-            s = []
-            for seq, score in activityPred.items():
-                s.append((seq, score))
-            print(f'{s}\n')
+            # print(f'\nSeq Activity:')
+            # s = []
+            # for seq, score in activityPred.items():
+            #     s.append((seq, score))
+            # print(f'{s}\n')
 
 
             dec = self.roundVal - 1
@@ -6018,7 +6004,6 @@ class NGS:
 
             # Normalize values
             activityExpNorm, maxExpActivity = {}, max(activityExp.values())
-            print(f'Max: {maxExpActivity}')
             activityPredNorm = {}
             for index, (substrate, activity) in enumerate(activityPred.items()):
                 activityPredNorm[substrate] = activity / maxActivity
@@ -6046,16 +6031,25 @@ class NGS:
             # Compare predictions
             print(f'Normalized Activity:')
             data = pd.DataFrame(0.0, index=list(activityExp.keys()),
-                                columns=['Experimental', 'Predicted'])
+                                columns=['Experimental', 'Exp Z-score', 'Exp Rank',
+                                         'Predicted', 'Pred Z-score', 'Pred Rank'])
+            zRankExp = pd.Series(expScoresZ).rank(ascending=False, method='min').astype(int).tolist()
+            zRankPred = pd.Series(predScoresZ).rank(ascending=False, method='min').astype(int).tolist()
             data.loc[:, 'Experimental'] = expScores
+            data.loc[:, 'Exp Z-score'] = expScoresZ
             data.loc[:, 'Predicted'] = predScores
+            data.loc[:, 'Pred Z-score'] = predScoresZ
+            data.loc[:, 'Exp Rank'] = zRankExp
+            data.loc[:, 'Pred Rank'] = zRankPred
+            data['Exp Rank'] = data['Exp Rank'].astype(int)
+            data['Pred Rank'] = data['Pred Rank'].astype(int)
             print(data)
 
             # Spearman rank correlation
             from scipy.stats import pearsonr, spearmanr
             rho, pValue = spearmanr(expRank, predRank)
             rho, pValue = round(rho, 3), round(pValue, 3)
-            print(f'\nSpearman ρ: {rho}, p={pValue}\n')
+            print(f'\nSpearman ρ: {red}{rho}{resetColor}, p={red}{pValue}{resetColor}\n')
 
             print(f'Predicted Activity:\n'
                   f'* Normalized: {colorP}{predScores}{resetColor}\n'
@@ -6065,8 +6059,10 @@ class NGS:
                   f'* Normalized:   {colorE}{expScores}{resetColor}\n'
                   f'* Z-Scores:     {colorE}{expScoresZ}{resetColor}\n')
 
-            # Plot prediction matrix
-            self.plotMatrix(data=matrix, figLabel='Prediction Matrix', printData=False)
+            pd.DataFrame(0.0, index=list(), columns=['Exp','Pred'])
+
+            # # Plot prediction matrix ##
+            # self.plotMatrix(data=matrix, figLabel='Prediction Matrix', printData=False)
 
             # Set title
             enzName = self.enzymeName.replace(' - ', '\n')
@@ -6081,153 +6077,88 @@ class NGS:
             expVals = [activityExpNorm[k] for k in labels]
             xTicks = np.arange(len(labels))
 
-            # Make figure
-            fig, ax = plt.subplots(figsize=self.figSize)
-            ax.bar(xTicks - barWidth / 2, predScoresZ, barWidth, label='Predicted',
-                   color=colorPred, edgecolor='black', linewidth=self.lineThickness)
-            ax.bar(xTicks + barWidth / 2, expScoresZ, barWidth, label='Experimental',
-                   color=colorExp, edgecolor='black', linewidth=self.lineThickness)
-            plt.title(f'{title}\nSpearman ρ: {rho}',
-                      fontsize=self.labelSizeTitle, fontweight='bold')
-            plt.axhline(y=0, color='black', linewidth=self.lineThickness)
-            ax.set_ylabel('Z-Score', fontsize=self.labelSizeAxis)
-            ax.legend(edgecolor='black', linewidth=self.lineThickness, loc='best',
-                      prop=FontProperties(weight='bold', size=self.labelSizeTicks - 2))
-
-            # Y-axis
-            spacer = 0.2
-            yMax = round(np.ceil(
-                max(max(predScoresZ), max(expScoresZ)) * 10), 2) / 10
-            yMin = round(np.floor(
-                min(min(predScoresZ), min(expScoresZ)) * 10), 2) / 10
-            yMax = np.ceil((round(yMax*10,2)/10)+spacer)
-            yMin = np.floor((round(yMin*10,2)/10)-spacer)
-            plt.ylim(yMin, yMax)
-
-            # Set xticks
-            ax.set_xticks(xTicks)
-            ax.set_xticklabels(labels, rotation=rotateLabel)
-
-            # Set tick parameters
-            ax.tick_params(axis='both', which='major', length=self.tickLength,
-                           labelsize=self.labelSizeTicks, width=self.lineThickness)
-
-            # Set the edge thickness
-            for tick in ax.xaxis.get_major_ticks():
-                tick.tick1line.set_markeredgewidth(
-                    self.lineThickness)  # Set tick width
-            for tick in ax.yaxis.get_major_ticks():
-                tick.tick1line.set_markeredgewidth(
-                    self.lineThickness)  # Set tick width
-            for spine in ax.spines.values():
-                spine.set_linewidth(self.lineThickness)
-
-            self.plotFig(plt=plt, fig=fig)
-
-            # Save the Figure
-            if self.saveFigures:
-                # Define: Save location
-                figTag = f'PredActivity-BarGraph'
-                if predLabel:
-                    figTag = figTag.replace(
-                        'BarGraph',
-                        f'BarGraph-{predLabel.replace(' ', '_')}'
-                    )
-
-                # Save figure
-                self.saveFigure(fig=fig, figType=figTag, seqLen=subLen, N=N,
-                                combinedMotifs=combinedMotifs)
+            # # Make figure
+            # fig, ax = plt.subplots(figsize=self.figSize)
+            # ax.bar(xTicks - barWidth / 2, predScoresZ, barWidth, label='Predicted',
+            #        color=colorPred, edgecolor='black', linewidth=self.lineThickness)
+            # ax.bar(xTicks + barWidth / 2, expScoresZ, barWidth, label='Experimental',
+            #        color=colorExp, edgecolor='black', linewidth=self.lineThickness)
+            # plt.title(f'{title}\nSpearman ρ: {rho}',
+            #           fontsize=self.labelSizeTitle, fontweight='bold')
+            # plt.axhline(y=0, color='black', linewidth=self.lineThickness)
+            # ax.set_ylabel('Z-Score', fontsize=self.labelSizeAxis)
+            # ax.legend(edgecolor='black', linewidth=self.lineThickness, loc='best',
+            #           prop=FontProperties(weight='bold', size=self.labelSizeTicks - 2))
+            #
+            # # Y-axis
+            # spacer = 0.2
+            # yMax = round(np.ceil(
+            #     max(max(predScoresZ), max(expScoresZ)) * 10), 2) / 10
+            # yMin = round(np.floor(
+            #     min(min(predScoresZ), min(expScoresZ)) * 10), 2) / 10
+            # yMax = np.ceil((round(yMax*10,2)/10)+spacer)
+            # yMin = np.floor((round(yMin*10,2)/10)-spacer)
+            # plt.ylim(yMin, yMax)
+            #
+            # # Set xticks
+            # ax.set_xticks(xTicks)
+            # ax.set_xticklabels(labels, rotation=rotateLabel)
+            #
+            # # Set tick parameters
+            # ax.tick_params(axis='both', which='major', length=self.tickLength,
+            #                labelsize=self.labelSizeTicks, width=self.lineThickness)
+            #
+            # # Set the edge thickness
+            # for tick in ax.xaxis.get_major_ticks():
+            #     tick.tick1line.set_markeredgewidth(
+            #         self.lineThickness)  # Set tick width
+            # for tick in ax.yaxis.get_major_ticks():
+            #     tick.tick1line.set_markeredgewidth(
+            #         self.lineThickness)  # Set tick width
+            # for spine in ax.spines.values():
+            #     spine.set_linewidth(self.lineThickness)
+            #
+            # self.plotFig(plt=plt, fig=fig)
+            #
+            # # Save the Figure
+            # if self.saveFigures:
+            #     # Define: Save location
+            #     figTag = f'PredActivity-BarGraph'
+            #     if predLabel:
+            #         figTag = figTag.replace(
+            #             'BarGraph',
+            #             f'BarGraph-{predLabel.replace(' ', '_')}'
+            #         )
+            #
+            #     # Save figure
+            #     self.saveFigure(fig=fig, figType=figTag, seqLen=subLen, N=N,
+            #                     combinedMotifs=combinedMotifs)
 
             # ============================================================================
             # ============================================================================
             from scipy.optimize import curve_fit
 
-            def fnExp(x, a, b, c):
-                return a * np.exp(b * x) + c
+            def fnLinear(x, m, b):
+                return m * x + b
 
-            def fitData(x, y):
-                x, y = np.array(x, dtype=float), np.array(y, dtype=float)
-
-                # a and c are linear given b, so profile b on a grid to get a real p0
-                def sse(b):
-                    A = np.column_stack([np.exp(b * x), np.ones_like(x)])
-                    coef, *_ = np.linalg.lstsq(A, y, rcond=None)
-                    return np.sum((y - A @ coef) ** 2)
-
-                grid = np.linspace(0.05, 5.0, 200)
-                b0 = grid[int(np.argmin([sse(b) for b in grid]))]
-                A = np.column_stack([np.exp(b0 * x), np.ones_like(x)])
-                (a0, c0), *_ = np.linalg.lstsq(A, y, rcond=None)
-
-                # bound b away from 0 so the linear ramp is unreachable
-                popt, pcov = curve_fit(fnExp, x, y, p0=[a0, b0, c0],
-                                       bounds=([-np.inf, 1e-3, -np.inf],
-                                               [np.inf, 10.0, np.inf]),
-                                       maxfev=10000)
-
-                if np.any(np.sqrt(np.diag(pcov)) > 100 * np.abs(popt)):
-                    print(f'WARNING: unidentified fit, popt={popt}')
-
-                yPred = fnExp(x, *popt)
-                ss_res = np.sum((y - yPred) ** 2)
-                ss_tot = np.sum((y - np.mean(y)) ** 2)
-                r2 = 1 - (ss_res / ss_tot)
-
-                xFit = np.linspace(x.min(), x.max(), 300)
-                return xFit, fnExp(xFit, *popt), r2, popt
-
-
-            def fnLog(x, a, b):
-                return a * np.log(x) - b
-
-            def fitDataLog(x, y):
-                popt, pcov = curve_fit(fnLog, x, y, maxfev=10000)
-                a, b = popt
-
-                # Generate smooth curve for plotting
+            def fitDataLinear(x, y):
+                print('Linear Fit:')
+                popt, pcov = curve_fit(fnLinear, x, y, maxfev=10000)
                 xFit = np.linspace(min(x), max(x), 300)
-                yFit = fnLog(xFit, *popt)
-
-                # R²
-                yPred = fnLog(np.array(x), *popt)
+                yFit = fnLinear(xFit, *popt)
+                yPred = fnLinear(np.array(x), *popt)
                 ss_res = np.sum((np.array(y) - yPred) ** 2)
                 ss_tot = np.sum((np.array(y) - np.mean(y)) ** 2)
                 r2 = 1 - (ss_res / ss_tot)
-                return xFit, yFit, r2, popt
-
-
-            def fnPoly(x, a, b, c):
-                return a * x ** 2 + b * x + c
-
-            def fitDataPoly(x, y):
-                popt, pcov = curve_fit(fnPoly, x, y, maxfev=10000)
-                xFit = np.linspace(min(x), max(x), 300)
-                yFit = fnPoly(xFit, *popt)
-                yPred = fnPoly(np.array(x), *popt)
-                ss_res = np.sum((np.array(y) - yPred) ** 2)
-                ss_tot = np.sum((np.array(y) - np.mean(y)) ** 2)
-                r2 = 1 - (ss_res / ss_tot)
+                print(f'\ty = {popt[0]}*x + {popt[1]}\n'
+                      f'\tR²: {r2:.3f}\n')
                 return xFit, yFit, r2
-            # ============================================================================
-            # ============================================================================
-            # Fit curve: exponential
-            x_fit, y_fit, r2, popt_exp = fitData(x=np.array(expScoresZ), y=np.array(predScoresZ))
-            print(f'R²: exp: {r2:.3f}')
-            # x_fit, y_fit, fitCurve, popt_exp = fitData(x=x, y=y)
-            a, b, c = popt_exp # y = a · e^(b·x) + c
-            print(f'Fitting data to an exponential curve:\n'
-                  f'  y = {round(a,2)} * e^({round(b,2)}·x) + {round(c,2)}\n')
-            # x_fit, y_fit, r2 = fitDataPoly(x=np.array(expScoresZ), y=np.array(y))
-            # print(f'R2 poly: {r2:.3f}')
+
 
             # Fit curve: linear
-            coeffs = np.polyfit(expScoresZ, predScoresZ, 1)
-            yPred = np.polyval(coeffs, expScoresZ)
-            ss_res = np.sum((np.array(predScoresZ) - yPred) ** 2)
-            ss_tot = np.sum((np.array(predScoresZ) - np.mean(predScoresZ)) ** 2)
-            r2_linear = 1 - (ss_res / ss_tot)
-            print(f'Linear R²: {r2_linear:.3f}\n')
-
+            x_fit, y_fit, r2 = fitDataLinear(
+                x=np.array(expScoresZ), y=np.array(predScoresZ)
+            )
 
             # Make figure
             fig, ax = plt.subplots(figsize=self.figSize)
