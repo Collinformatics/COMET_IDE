@@ -448,7 +448,8 @@ class NGS:
     def rankScores(values):
         if not isinstance(values, list):
             values = list(values)
-        ranked = pd.Series(values).rank(ascending=False, method='min')
+        ranked = pd.Series(values).rank(ascending=False, method='min').astype(int).tolist()
+        # rank(ascending=False, method='min').astype(int).tolist()
         return [int(x) for x in ranked]
 
 
@@ -5950,7 +5951,7 @@ class NGS:
                     pos = values.columns[index]
                     value = values.loc[AA, pos]
                     S = entropy.loc[pos, 'ΔS']
-                    x = S ** value
+                    x = np.log2(S ** value)
                     # y = value
                     y = np.log2(value)
                     spacer = (spacerMax - len(pos)) * ' '
@@ -6024,23 +6025,20 @@ class NGS:
             expScoresZ = [round(a, self.roundVal) for a in activityExpZ.values()]
             predScores = [round(a, self.roundVal) for a in activityPredNorm.values()]
             predScoresZ = [round(a, self.roundVal) for a in activityPredZ.values()]
-
-            expRank = self.rankScores(expScores)
-            predRank = self.rankScores(predScores)
+            expRank = self.rankScores(expScoresZ)
+            predRank = self.rankScores(predScoresZ)
 
             # Compare predictions
             print(f'Normalized Activity:')
             data = pd.DataFrame(0.0, index=list(activityExp.keys()),
                                 columns=['Experimental', 'Exp Z-score', 'Exp Rank',
                                          'Predicted', 'Pred Z-score', 'Pred Rank'])
-            zRankExp = pd.Series(expScoresZ).rank(ascending=False, method='min').astype(int).tolist()
-            zRankPred = pd.Series(predScoresZ).rank(ascending=False, method='min').astype(int).tolist()
             data.loc[:, 'Experimental'] = expScores
             data.loc[:, 'Exp Z-score'] = expScoresZ
             data.loc[:, 'Predicted'] = predScores
             data.loc[:, 'Pred Z-score'] = predScoresZ
-            data.loc[:, 'Exp Rank'] = zRankExp
-            data.loc[:, 'Pred Rank'] = zRankPred
+            data.loc[:, 'Exp Rank'] = expRank
+            data.loc[:, 'Pred Rank'] = predRank
             data['Exp Rank'] = data['Exp Rank'].astype(int)
             data['Pred Rank'] = data['Pred Rank'].astype(int)
             print(data)
@@ -6059,7 +6057,6 @@ class NGS:
                   f'* Normalized:   {colorE}{expScores}{resetColor}\n'
                   f'* Z-Scores:     {colorE}{expScoresZ}{resetColor}\n')
 
-            pd.DataFrame(0.0, index=list(), columns=['Exp','Pred'])
 
             # # Plot prediction matrix ##
             # self.plotMatrix(data=matrix, figLabel='Prediction Matrix', printData=False)
