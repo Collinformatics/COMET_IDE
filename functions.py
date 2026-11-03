@@ -3585,6 +3585,18 @@ class NGS:
 
 
 
+    @staticmethod
+    def cosineSimilarity(v1, v2, sets):
+        # print(f'Cosine Similarity:')
+        # df = pd.DataFrame(0, index=v1.index, columns=['Vector 1', 'Vector 2'])
+        # df['Vector 1'], df['Vector 2'] = v1, v2
+        # print(df)
+        cosSim = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+        # print(f'{sets}: {red}{cosSim}{resetColor}\n')
+        return cosSim
+
+
+
     def fixedMotifStats(self, countsList, initialRF, motifFrame, datasetTag):
         print('================== Statistical Evaluation: Fixed Motif Counts '
               '===================')
@@ -3624,16 +3636,6 @@ class NGS:
             frameESList.append(frameES.copy())
 
 
-        def cosineSimilarity(v1, v2, sets):
-            # print(f'Cosine Similarity:')
-            # df = pd.DataFrame(0, index=v1.index, columns=['Vector 1', 'Vector 2'])
-            # df['Vector 1'], df['Vector 2'] = v1, v2
-            # print(df)
-            cosSim = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-            # print(f'{sets}: {red}{cosSim}{resetColor}\n')
-            return cosSim
-
-
         # Evaluate similarity
         if len(frameESList) > 1:
             indicies = [i for i in range(len(frameESList))]
@@ -3644,7 +3646,7 @@ class NGS:
                 vect1 = frameESList[set1]
                 vect2 = frameESList[set2]
                 for pos in motifFrame:
-                    similarity.loc[f'{combo}', pos] = cosineSimilarity(
+                    similarity.loc[f'{combo}', pos] = self.cosineSimilarity(
                         v1=vect1.loc[:, pos], v2=vect2.loc[:, pos],
                         sets=f'{pos} {set1} vs {set2}'
                     )
