@@ -1349,7 +1349,6 @@ class NGS:
         print(f'Datasets: {purple}{self.datasetTag}{resetColor}\n'
               f'Motif Label: {blue}{", ".join(motifLabel)}{resetColor}\n'
               f'Motif Frame: {blue}{", ".join(initialMotifFrame)}{resetColor}\n\n')
-
         frameLength = len(motifLabel)
         countsMotifsAll = []
         totalCountsFixedFrame = None
@@ -1442,13 +1441,42 @@ class NGS:
             print(f'     {position}: {red}{posSumsCombinedMotif[index]:,}{resetColor}')
         print('\n')
 
+        # Evaluate similarity
+        if len(countsMotifsAll) > 1:
+            axis = [f'R{i}' for i in range(1, frameLength + 1)]
+            indicies = [i for i in range(len(countsMotifsAll))]
+            combos = list(combinations(indicies, 2))
+            for combo in combos:
+                set1, set2 = combo[0], combo[1]
+                vect1 = pd.DataFrame(countsMotifsAll[set1],
+                                     index=self.letters, columns=axis)
+                vect2 = pd.DataFrame(countsMotifsAll[set2],
+                                     index=self.letters, columns=axis)
+                for pos in axis:
+                    self.cosineSimilarity(
+                        v1=vect1.loc[:, pos], v2=vect2.loc[:, pos],
+                        sets=f'{pos} {set1} vs {set2}'
+                    )
+                    sys.exit()
+
         if returnList:
             # Convert a list into 3D array
             countsMotifsAll = np.stack(countsMotifsAll, axis=0)
-
+            sys.exit()
             return countsMotifsAll, totalCountsFixedFrame, posSumsCombinedMotif
         else:
             return totalCountsFixedFrame, posSumsCombinedMotif
+
+
+
+    @staticmethod
+    def cosineSimilarity(v1, v2, sets):
+        print(f'Cosine Similarity:')
+        df = pd.DataFrame(0, index=v1.index, columns=['Vector 1', 'Vector 2'])
+        df['Vector 1'], df['Vector 2'] = v1, v1
+        print(df)
+        cosSim = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+        print(f'{sets}: {red}{cosSim}{resetColor}\n')
 
 
 
@@ -5914,22 +5942,22 @@ class NGS:
                                           initialRF=initialRF,
                                           pHeader=False)
 
-        # entropy = pd.DataFrame(0.0, index=matrix.columns, columns=['ΔS'])
-        # entropyMax = np.log2(len(matrix.index))
-        # for indexColumn in matrix.columns:
-        #     S = 0
-        #     for indexRow, probRatio in matrix.iterrows():
-        #         prob = probRatio[indexColumn]
-        #         if prob == 0:
-        #             continue
-        #         else:
-        #             S += -prob * np.log2(prob)
-        #     entropy.loc[indexColumn, 'ΔS'] = entropyMax - S
-        # maxS = max(entropy.iloc[:, 0])
-        # for pos in entropy.index:
-        #     entropy.loc[pos, 'ΔS'] = entropy.loc[pos, 'ΔS'] / maxS
-        # print(f'Normalized Entropy:\n{entropy}\n\n')
-        entropy = self.entropy.copy()
+        entropy = pd.DataFrame(0.0, index=matrix.columns, columns=['ΔS'])
+        entropyMax = np.log2(len(matrix.index))
+        for indexColumn in matrix.columns:
+            S = 0
+            for indexRow, probRatio in matrix.iterrows():
+                prob = probRatio[indexColumn]
+                if prob == 0:
+                    continue
+                else:
+                    S += -prob * np.log2(prob)
+            entropy.loc[indexColumn, 'ΔS'] = entropyMax - S
+        maxS = max(entropy.iloc[:, 0])
+        for pos in entropy.index:
+            entropy.loc[pos, 'ΔS'] = entropy.loc[pos, 'ΔS'] / maxS
+        print(f'Normalized Entropy:\n{entropy}\n\n')
+        # entropy = self.entropy.copy()
 
         # for pos in matrix.columns:
         #     matrix.loc[:, pos] = matrix.loc[:, pos] * entropy.loc[pos, 'ΔS']
@@ -5946,20 +5974,27 @@ class NGS:
                 print(f'{pink}{substrate}{resetColor}')
                 score = 0
                 for index in range(subLen): ##
+                    # if index >= 6:
+                    #     break
                     # Evaluate substrate
                     AA = substrate[index]
                     pos = values.columns[index]
                     value = values.loc[AA, pos]
                     S = entropy.loc[pos, 'ΔS']
+                    # if S < 0.7:
+                    #     continue
                     x = np.log2(S ** value)
                     # y = value
                     y = np.log2(value)
                     spacer = (spacerMax - len(pos)) * ' '
                     spacer2 = '' if x < 0 else ' '
+                    # print(f'* {blue}{AA}@{pos}{resetColor}:{spacer} '
+                    #       f'ER: {purple}{value:.4f}{resetColor}, '
+                    #       f'∆S: {S:.4f}, '
+                    #       f'X: {greenLight}{x:.4f}{resetColor},{spacer2} '
+                    #       f'Y: {red}{y:.4f}{resetColor}')
                     print(f'* {blue}{AA}@{pos}{resetColor}:{spacer} '
                           f'ER: {purple}{value:.4f}{resetColor}, '
-                          f'∆S: {S:.4f}, '
-                          f'X: {greenLight}{x:.4f}{resetColor},{spacer2} '
                           f'Y: {red}{y:.4f}{resetColor}')
                     if score == 0:
                         score = y
@@ -5968,8 +6003,13 @@ class NGS:
                         score += y
                 # print(f'Score: {colorP}{score:.3e}{resetColor}')
                 # score = np.exp(score)
-                print(f'Score: {colorP}{score:.3e}{resetColor}\n')
+                # print(f'Score: {colorP}{score:.3e}{resetColor}\n')
+                print(f'Score: {colorP}{score:.3f}{resetColor}\n')
                 activityPred[substrate] = float(score)
+            rmSeqs = [] # ['ATVQSKMS']
+            for seq in rmSeqs:
+                del activityPred[seq]
+                del activityExp[seq]
             ranked = pd.Series(activityPred.values()).rank(
                 ascending=False, method='min').astype(int)
 
@@ -6008,7 +6048,7 @@ class NGS:
             activityExpNorm, maxExpActivity = {}, max(activityExp.values())
             activityPredNorm = {}
             for index, (substrate, activity) in enumerate(activityPred.items()):
-                activityPredNorm[substrate] = activity / maxActivity
+                activityPredNorm[substrate] = 1 / (activity / maxActivity)
                 activityExpNorm[substrate] = activityExp[substrate] / maxExpActivity
             activityPredZ = ZScores(activityPred, 'Predicted Activity')
             activityExpZ = ZScores(activityExp, 'Experimental Activity')
@@ -6059,8 +6099,8 @@ class NGS:
                   f'* Z-Scores:     {colorE}{expScoresZ}{resetColor}\n')
 
 
-            # # Plot prediction matrix ##
-            # self.plotMatrix(data=matrix, figLabel='Prediction Matrix', printData=False)
+            # Plot prediction matrix ##
+            self.plotMatrix(data=matrix, figLabel='Prediction Matrix', printData=False)
 
             # Set title
             enzName = self.enzymeName.replace(' - ', '\n')
@@ -6075,62 +6115,62 @@ class NGS:
             expVals = [activityExpNorm[k] for k in labels]
             xTicks = np.arange(len(labels))
 
-            # # Make figure
-            # fig, ax = plt.subplots(figsize=self.figSize)
-            # ax.bar(xTicks - barWidth / 2, predScoresZ, barWidth, label='Predicted',
-            #        color=colorPred, edgecolor='black', linewidth=self.lineThickness)
-            # ax.bar(xTicks + barWidth / 2, expScoresZ, barWidth, label='Experimental',
-            #        color=colorExp, edgecolor='black', linewidth=self.lineThickness)
-            # plt.title(f'{title}\nSpearman ρ: {rho}',
-            #           fontsize=self.labelSizeTitle, fontweight='bold')
-            # plt.axhline(y=0, color='black', linewidth=self.lineThickness)
-            # ax.set_ylabel('Z-Score', fontsize=self.labelSizeAxis)
-            # ax.legend(edgecolor='black', linewidth=self.lineThickness, loc='best',
-            #           prop=FontProperties(weight='bold', size=self.labelSizeTicks - 2))
-            #
-            # # Y-axis
-            # spacer = 0.2
-            # yMax = round(np.ceil(
-            #     max(max(predScoresZ), max(expScoresZ)) * 10), 2) / 10
-            # yMin = round(np.floor(
-            #     min(min(predScoresZ), min(expScoresZ)) * 10), 2) / 10
-            # yMax = np.ceil((round(yMax*10,2)/10)+spacer)
-            # yMin = np.floor((round(yMin*10,2)/10)-spacer)
-            # plt.ylim(yMin, yMax)
-            #
-            # # Set xticks
-            # ax.set_xticks(xTicks)
-            # ax.set_xticklabels(labels, rotation=rotateLabel)
-            #
-            # # Set tick parameters
-            # ax.tick_params(axis='both', which='major', length=self.tickLength,
-            #                labelsize=self.labelSizeTicks, width=self.lineThickness)
-            #
-            # # Set the edge thickness
-            # for tick in ax.xaxis.get_major_ticks():
-            #     tick.tick1line.set_markeredgewidth(
-            #         self.lineThickness)  # Set tick width
-            # for tick in ax.yaxis.get_major_ticks():
-            #     tick.tick1line.set_markeredgewidth(
-            #         self.lineThickness)  # Set tick width
-            # for spine in ax.spines.values():
-            #     spine.set_linewidth(self.lineThickness)
-            #
-            # self.plotFig(plt=plt, fig=fig)
-            #
-            # # Save the Figure
-            # if self.saveFigures:
-            #     # Define: Save location
-            #     figTag = f'PredActivity-BarGraph'
-            #     if predLabel:
-            #         figTag = figTag.replace(
-            #             'BarGraph',
-            #             f'BarGraph-{predLabel.replace(' ', '_')}'
-            #         )
-            #
-            #     # Save figure
-            #     self.saveFigure(fig=fig, figType=figTag, seqLen=subLen, N=N,
-            #                     combinedMotifs=combinedMotifs)
+            # Make figure
+            fig, ax = plt.subplots(figsize=self.figSize)
+            ax.bar(xTicks - barWidth / 2, predScoresZ, barWidth, label='Predicted',
+                   color=colorPred, edgecolor='black', linewidth=self.lineThickness)
+            ax.bar(xTicks + barWidth / 2, expScoresZ, barWidth, label='Experimental',
+                   color=colorExp, edgecolor='black', linewidth=self.lineThickness)
+            plt.title(f'{title}\nSpearman ρ: {rho}',
+                      fontsize=self.labelSizeTitle, fontweight='bold')
+            plt.axhline(y=0, color='black', linewidth=self.lineThickness)
+            ax.set_ylabel('Z-Score', fontsize=self.labelSizeAxis)
+            ax.legend(edgecolor='black', linewidth=self.lineThickness, loc='best',
+                      prop=FontProperties(weight='bold', size=self.labelSizeTicks - 2))
+
+            # Y-axis
+            spacer = 0.2
+            yMax = round(np.ceil(
+                max(max(predScoresZ), max(expScoresZ)) * 10), 2) / 10
+            yMin = round(np.floor(
+                min(min(predScoresZ), min(expScoresZ)) * 10), 2) / 10
+            yMax = np.ceil((round(yMax*10,2)/10)+spacer)
+            yMin = np.floor((round(yMin*10,2)/10)-spacer)
+            plt.ylim(yMin, yMax)
+
+            # Set xticks
+            ax.set_xticks(xTicks)
+            ax.set_xticklabels(labels, rotation=rotateLabel)
+
+            # Set tick parameters
+            ax.tick_params(axis='both', which='major', length=self.tickLength,
+                           labelsize=self.labelSizeTicks, width=self.lineThickness)
+
+            # Set the edge thickness
+            for tick in ax.xaxis.get_major_ticks():
+                tick.tick1line.set_markeredgewidth(
+                    self.lineThickness)  # Set tick width
+            for tick in ax.yaxis.get_major_ticks():
+                tick.tick1line.set_markeredgewidth(
+                    self.lineThickness)  # Set tick width
+            for spine in ax.spines.values():
+                spine.set_linewidth(self.lineThickness)
+
+            self.plotFig(plt=plt, fig=fig)
+
+            # Save the Figure
+            if self.saveFigures:
+                # Define: Save location
+                figTag = f'PredActivity-BarGraph'
+                if predLabel:
+                    figTag = figTag.replace(
+                        'BarGraph',
+                        f'BarGraph-{predLabel.replace(' ', '_')}'
+                    )
+
+                # Save figure
+                self.saveFigure(fig=fig, figType=figTag, seqLen=subLen, N=N,
+                                combinedMotifs=combinedMotifs)
 
             # ============================================================================
             # ============================================================================
