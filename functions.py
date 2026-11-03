@@ -1441,42 +1441,13 @@ class NGS:
             print(f'     {position}: {red}{posSumsCombinedMotif[index]:,}{resetColor}')
         print('\n')
 
-        # Evaluate similarity
-        if len(countsMotifsAll) > 1:
-            axis = [f'R{i}' for i in range(1, frameLength + 1)]
-            indicies = [i for i in range(len(countsMotifsAll))]
-            combos = list(combinations(indicies, 2))
-            for combo in combos:
-                set1, set2 = combo[0], combo[1]
-                vect1 = pd.DataFrame(countsMotifsAll[set1],
-                                     index=self.letters, columns=axis)
-                vect2 = pd.DataFrame(countsMotifsAll[set2],
-                                     index=self.letters, columns=axis)
-                for pos in axis:
-                    self.cosineSimilarity(
-                        v1=vect1.loc[:, pos], v2=vect2.loc[:, pos],
-                        sets=f'{pos} {set1} vs {set2}'
-                    )
-                    sys.exit()
 
         if returnList:
             # Convert a list into 3D array
             countsMotifsAll = np.stack(countsMotifsAll, axis=0)
-            sys.exit()
             return countsMotifsAll, totalCountsFixedFrame, posSumsCombinedMotif
         else:
             return totalCountsFixedFrame, posSumsCombinedMotif
-
-
-
-    @staticmethod
-    def cosineSimilarity(v1, v2, sets):
-        print(f'Cosine Similarity:')
-        df = pd.DataFrame(0, index=v1.index, columns=['Vector 1', 'Vector 2'])
-        df['Vector 1'], df['Vector 2'] = v1, v1
-        print(df)
-        cosSim = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-        print(f'{sets}: {red}{cosSim}{resetColor}\n')
 
 
 
@@ -3642,7 +3613,7 @@ class NGS:
 
                 # Calculate: RF
                 frameRF.loc[:, column] = (countsFrame.loc[:, column] /
-                                            countsFrameTotal.loc[index, column])
+                                          countsFrameTotal.loc[index, column])
 
                 # Calculate: ES
                 frameES.loc[:, column] = np.log2(
@@ -3651,6 +3622,34 @@ class NGS:
             print(f'Enrichment Score: {purple}{self.motifTags[index]}\n'
                   f'{greenLight}{frameES}{resetColor}\n\n')
             frameESList.append(frameES.copy())
+
+
+        def cosineSimilarity(v1, v2, sets):
+            # print(f'Cosine Similarity:')
+            # df = pd.DataFrame(0, index=v1.index, columns=['Vector 1', 'Vector 2'])
+            # df['Vector 1'], df['Vector 2'] = v1, v2
+            # print(df)
+            cosSim = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+            # print(f'{sets}: {red}{cosSim}{resetColor}\n')
+            return cosSim
+
+
+        # Evaluate similarity
+        if len(frameESList) > 1:
+            indicies = [i for i in range(len(frameESList))]
+            combos = list(combinations(indicies, 2))
+            similarity = pd.DataFrame(0.0, index=[], columns=motifFrame)
+            for combo in combos:
+                set1, set2 = combo[0], combo[1]
+                vect1 = frameESList[set1]
+                vect2 = frameESList[set2]
+                for pos in motifFrame:
+                    similarity.loc[f'{combo}', pos] = cosineSimilarity(
+                        v1=vect1.loc[:, pos], v2=vect2.loc[:, pos],
+                        sets=f'{pos} {set1} vs {set2}'
+                    )
+            print(f'Cosine Similarity:\n{similarity}\n\n')
+            sys.exit()
 
         # Combine the ES DFs
         frameESCombined = pd.concat(frameESList, axis=0, keys=range(len(frameESList)))
@@ -3686,6 +3685,7 @@ class NGS:
             data=frameESStDev, totalCounts=None,
             dataType='Standard Deviation', combinedMotifs=True
         )
+        sys.exit()
 
 
 
