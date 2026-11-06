@@ -1,0 +1,529 @@
+:root {
+    --black: #101010;
+    --grey: #303030;
+    --greyHeader: #303030;
+    --greylight: #585858;
+    --white: #FFFFFF;
+    --red: #EF3232;
+    --orange: #FA8128;
+    --orangeburnt: #BF5700;
+    --green: #2ED813;
+    --greendark: #2DD11C; /* #1DB202; */
+    --pink: #FF20FF;
+
+    --colorBody: var(--black);
+    --colorHeader: var(--greyHeader);
+    --colorBox: var(--colorBody);
+    --colorForm: var(--grey);
+    --colorInput: var(--colorBody);
+    --colorOutline: var(--greylight);
+    --colorPlaceholder: #999999;
+
+    --textColor: var(--white);
+    --textColorLabel: var(--orange);
+    --textSize: 20px;
+    --textSizeInputs: 14px;
+    --textSizeLabel: 24px;
+    --textSizeHeader: 32px;
+    --textSizeResults: 18px;
+    --buttonFontSize: 20px;
+    --buttonFontSizeFt: 16px;
+    --textSizeInc: 4px;
+    --headerHeight: 42px;
+    --lineHeight: 2;
+    --radForm: 6px;
+    --radInput: 4px;
+    --borderColor: var(--textColorLabel);
+
+    --buttonHeight: 40px;
+    --buttonWidth: 130px;
+    --buttonHover: var(--white);
+    --buttonClick: var(--green);
+    --buttonRad: var(--radForm);
+
+    --gap: 5px;
+    --padSize: 2px;
+    --padBox: 20px;
+    --padButtonHeader: 10px;
+    --padForm: 5px; /*##*/
+    --padInput: 3px;
+    --margin: 30px;
+    --marginInfo: 10px;
+    --marginVert: 3px;
+    --marginFormHorizontal: 10px;
+    --marginFormVertical: 15px;
+    --marginBottom: 2px;
+    --marginFooter: 10px;
+}
+
+/* hide scrollbar */
+* {
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* IE/Edge */
+}
+*::-webkit-scrollbar {
+    display: none;                /* Chrome/Safari */
+}
+
+body {
+    background-color: var(--colorBody);
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    min-height: 100dvh; /* 100% of the Viewport Height */
+}
+
+h1 {
+    color: var(--orangeburnt);
+    background-color: var(--colorHeader);
+    font-size: var(--textSizeHeader);
+    text-align: center;
+    margin: 0;
+    padding: 20px;
+}
+
+h2 {
+    color: var(--orange);
+    /*text-shadow: 0 0 5px var(--orangeburnt);/**/
+    font-size: var(--textSizeHeader);
+    margin: 25px;
+    padding: calc(var(--padSize) * 2) var(--padSize) 0 var(--padSize);
+}
+
+.info {
+    color: var(--textColor);
+    font-size: var(--textSize);
+    width: fit-content;
+    align-self: flex-start;
+    margin: var(--marginInfo) var(--margin) var(--marginInfo) var(--margin);
+    padding: var(--padSize);
+}
+
+p {
+    color: var(--textColor);
+    font-size: var(--textSize);
+    width: fit-content;
+    align-self: flex-start;
+    margin: 0 var(--margin) 10px var(--margin);
+    padding: var(--padSize);
+    text-align: left; /* Align text */
+}.p2 {
+     color: var(--orange);
+     max-width: 1200px;
+     font-size: calc(var(--textSize) + var(--textSizeInc));
+     font-weight: bold;
+     text-align: center; /* center inline content */
+     display: block;     /* ensure it's block-level */
+     /* center the block horizontally */
+     margin: 20px auto 0;
+     padding: 0 0 0 0;
+}.p3 { /* Job Parameters */
+    color: var(--textColor);
+    font-size: var(--textSizeResults);
+    text-align: left;
+    margin: 0 0 0 0; /* optional to remove default padding */
+    list-style-position: inside;
+}.param-value {
+    color: var(--orange);
+    font-weight: bold;
+}.pL { /* Labels */
+    color: var(--orange);
+    font-size: calc(var(--textSize) + var(--textSizeInc));
+    font-weight: bold;
+    text-align: center;
+    width: fit-content;
+    margin: 0 auto;  /* centers the element itself */
+}.pE { /* Equations */
+    color: var(--textColor);
+    font-size: var(--textSize);
+    text-align: center;       /* center inline content */
+    display: block;           /* ensure it's block-level */
+    margin: 10px auto;        /* center the block horizontally */
+    width: fit-content;       /* only take up needed space */
+}
+
+img {
+    width: 90%;
+    max-width: 1300px;
+    height: auto;
+    margin: 10px;
+}
+
+.highlight {
+    color: var(--orangeburnt)
+}
+
+.help {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}.help-icon {
+    color: white;
+    background-color: var(--greendark);
+    font-size: 13px;
+    font-weight: bold;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-bottom: 6px;
+}.help-icon:hover {
+    color: var(--pink);
+    background-color: var(--white);
+    border-color: var(--pink);
+}.help-tooltip {
+    color: var(--white);
+    background-color: var(--colorBody);
+    border: 1px solid var(--pink);
+    font-size: var(--textSizeInputs);
+    line-height: 1.2;
+    border-radius: var(--radForm);
+    position: absolute;
+    left: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 2s ease;
+    font-weight: normal;
+    white-space: nowrap;
+    z-index: 100;
+    box-shadow: 3px 4px 10px var(--black);
+    margin: 5px;
+    padding: 5px;
+}.help-icon:hover .help-tooltip {
+    display: block;  /* instant — change to flex for transition */
+    opacity: 1;
+    visibility: visible;
+}
+
+.box {
+    background-color: var(--colorBox);
+    display: flex;
+    flex-direction: column;
+    align-items: center;      /* Center vertically */
+    overflow-wrap: anywhere; /* Keep text in the box */
+    margin-bottom: var(--marginBottom);
+    padding: var(--padSize) var(--padSize) var(--padBox) var(--padSize);
+}
+
+/* Dynamically adjust input boxes */
+#enzymeName {
+    width: auto;
+    min-width: 100px;
+    field-sizing: content; /* automatically grows with content */
+}
+#seqLength {
+    width: auto;
+    min-width: 70px;
+    field-sizing: content; /* automatically grows with content */
+}
+
+/* Header */
+.container-header {
+    background-color: var(--colorHeader);
+    width: 100%;
+    height: var(--headerHeight);
+    display: flex; /* make horizontal buttons */
+    flex-direction: row;
+    margin: 0 auto;
+}.buttonHeader {
+    color: var(--orange);
+    background-color: var(--colorHeader);
+    flex: none; /* makes buttons line up horizontally */
+    height: var(--headerHeight);
+    width: auto; /* Dynamically adjust the width of the button */
+    font-size: var(--buttonFontSize);
+    cursor: pointer;
+    border: none;
+    margin: 0;
+    white-space: nowrap; /* prevents label from wrapping */
+    padding: var(--padButtonHeader);
+    border-radius: 0;
+}.buttonHeader:hover {
+    color: var(--buttonHover);
+    background-color: var(--colorHeader);
+}.buttonHeader:active {
+    color: var(--buttonClick); /* color while being clicked */
+    background-color: var(--colorHeader);
+}.button-group {
+    background-color: var(--colorHeader);
+    display: flex;
+    justify-content: flex-start;
+    flex: 1;
+}.button-group-r {
+    background-color: var(--colorHeader);
+    display: flex;
+    justify-content: flex-end;      /* pushes button to the right */
+    margin-left: auto;              /* pushes the whole group right */
+}
+
+/* Figures*/
+.figures-container {
+    background-color: var(--colorBody);
+    padding: var(--padSize);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: var(--padBox);
+}.figure-img {
+     height: auto;
+}
+
+/* Forms */
+.box-form {
+    background-color: var(--colorBody);
+    width: 100%;
+    margin: 0 var(--marginFormHorizontal) var(--marginFormVertical) var(--marginFormHorizontal);
+    padding: calc(var(--marginFormVertical)) 0 var(--marginFormVertical) 0;
+}.form-group {
+    font-size: var(--textSize);
+    display: flex;
+    flex-direction: column;   /* Stack label and input */
+    align-items: flex-start;  /* Align to the left */
+    margin: 0 0 var(--marginBottom) 0;
+    gap: 0;
+    min-width: 0;
+    padding-bottom: var(--padForm); /* Pad each form input */
+    margin-right: var(--padBox);
+}.form-group label {
+    color: var(--textColorLabel);
+    align-items: center; /* Vertically center all children */
+    font-weight: bold;
+    padding-bottom: 1px;
+}.form-group .label-sub {
+    color: var(--textColor);
+    font-weight: normal;
+    align-items: center;
+    padding-left: var(--padForm); /* Pad each form input label */
+}.form-group .label-w {
+    color: var(--white);
+    font-size: var(--textSize);
+    font-weight: normal;
+    align-items: center;
+    width: 107px;        /* fixed width */
+    margin: 1px 0 1px 0;
+}.input-form {
+    color: var(--textColorLabel);
+    background-color: var(--colorForm);
+    /*outline: 2px solid var(--borderColor);*/
+    border: 2px solid var(--borderColor);
+    margin: 0 var(--margin) 0 var(--margin);
+    border-radius: var(--radForm);
+    padding: var(--padBox); /* ## Pad the input form */
+    display: block;
+}.form-button {
+    display: flex;
+    justify-content: center; /* horizontally center */
+    width: 100%;
+}.form-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center; /* Vertically center all children */
+    justify-content: flex-start; /* Align form to the left */
+    gap: var(--gap);
+    font-weight: normal;
+    margin: var(--marginVert) var(--padBox) var(--marginVert) var(--marginFormHorizontal);
+    padding-top: 1px;
+}.box-button {
+    background-color: var(--colorForm);
+    padding: var(--marginFormVertical) 0 0 0;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"] {
+    border: 1px solid var(--colorOutline);
+    border-radius: var(--radInput);
+    box-sizing: border-box;
+    line-height: 1.0; /* Helps with vertical alignment */
+    height: auto;
+    font-size: var(--textSizeInputs);
+    padding: var(--padInput) var(--padInput);  /* Pad input text */
+}
+
+input, select, textarea {
+    color: var(--textColor); /* Inherits text color from parent */
+    background-color: var(--colorInput); /* Or a slightly lighter/darker variant */
+    border: 0px solid var(--colorOutline); /* Optional: Adjust border for visibility */
+}
+
+input[type="file"] {
+    background-color: var(--colorForm);
+    width: 300px; /* Sets total width */
+    max-width: 100%;
+}
+
+input[type="file"]::file-selector-button {
+    background-color: var(--colorBox);   /* Match your theme */
+    color: var(--white);                 /* Text color */
+    border: 1px solid var(--greylight);  /* Visible border */
+    padding: 2px 8px;                    /* Match your other inputs */
+    cursor: pointer;
+}
+
+/* Optional: Hover effect */
+input[type="file"]::file-selector-button:hover {
+    background-color: #444444;
+}
+
+/* ## Textbox */
+.textbox {
+    color: var(--textColor);
+    background-color: var(--colorBody);
+    border: 1px solid var(--colorOutline);
+    border-radius: var(--radInput);
+    width: 100%;
+    text-align: left;
+    line-height: var(--lineHeight);
+    min-height: calc(3lh + 3 * var(--padSize));
+    field-sizing: content;
+    vertical-align: top; /* Prevents baseline alignment shifts */
+    display: block; /* Removes inline-block whitespace issues */
+    font-family: inherit;
+    font-size: var(--textSizeInputs);
+    margin: 0 var(--marginFormHorizontal) 0 0;
+    padding: var(--padInput) var(--padInput); /* Pad input text */
+}.textbox::placeholder {
+    color: var(--colorPlaceholder);  /* or whatever color for hint text */
+    opacity: 1;
+}
+
+select {
+    color: #444444; /* Inherits text color from parent (usually white in night mode) */
+    background-color: var(--colorBody); /* Matches your body background */
+    border: 1px solid var(--colorOutline); /* Optional: Ensure border is visible */
+}
+
+.errormsg {
+    color: var(--red);
+    font-size: var(--textSizeResults);
+    display: none;
+    padding: var(--padSize) var(--padForm) 0 var(--padForm);
+}
+
+/* Button */
+button {
+    background-color: var(--orangeburnt);
+    color: var(--black);
+    font-size: var(--buttonFontSize);
+    cursor: pointer;
+    align-items: center;
+    border: none;
+    border-radius: var(--buttonRad);
+    width: var(--buttonWidth);
+    height: var(--buttonHeight);
+}
+button:hover {
+    background-color: var(--black);
+}.button-wrapper {
+    display: flex;
+    justify-content: center;  /* Horizontally center button */
+    align-items: center;      /* Vertically center button (if parent allows) */
+    width: 100%;
+}
+
+/* execute button */
+.button {
+    color: var(--textColor);
+    outline: none;
+    margin: 0;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: var(--buttonRad);
+    -webkit-mask-image: -webkit-radial-gradient(white, black); /* ← Safari clip fix */
+}.button::after {
+    content: "";
+    z-index: -1;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    left: 0;
+    top: 0;
+    border-radius: var(--buttonRad);
+}.button::before {
+    content: "";
+    background: linear-gradient(45deg, #FF5BFF, #56ff5d, #FF5BFF);
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    background-size: 600%;
+    z-index: -1;
+    width: calc(100% + 8px);
+    height:  calc(100% + 8px);
+    filter: blur(12px);
+    animation: glowing 20s linear infinite;
+    transition: opacity .3s ease-in-out;
+    border-radius: var(--buttonRad);
+    opacity: 0;
+}
+@keyframes glowing { /* hover */
+    0% {background-position: 0 0;}
+    50% {background-position: 400% 0;}
+    100% {background-position: 0 0;}
+}.button:hover::before {
+    opacity: 1;
+}.button:active:after {
+    background: transparent;
+}.button:active {
+    color: var(--black);
+}
+
+/* Footer */
+.ft {
+    color: var(--textColor);
+    font-size: var(--buttonFontSizeFt);
+    border-top: 2px solid var(--orangeburnt);
+    line-height: 1.2;
+    gap: 0;
+    width: 100%; /* ensure it's not collapsed */
+    margin-top: 0;
+    margin-bottom: 70px;
+    padding: var(--marginFooter) 0 0 0;
+}.ft span {
+    display: block; /* forces span to its own line */
+    margin-left: var(--marginFooter);
+}.ft a {
+    text-decoration: none;
+    display: block; /* forces a to its own line */
+    margin-left: var(--marginFooter); /* matches span */
+}
+
+/* footer button */
+.btn {
+    background-color: var(--colorBody);
+    color: var(--textColor);
+    height: auto;
+    font-size: var(--buttonFontSizeFt);
+    cursor: pointer;
+    border: none;
+    white-space: nowrap; /* ⬅ prevents label from wrapping */
+    display: block;     /* ← add this, removes inline spacing */
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+}.btn:hover {
+    color: var(--orange);
+    background-color: var(--colorBody);
+}.btn:active {
+    color: var(--green);                    /* color while being clicked */
+    background-color: var(--colorBody);
+}.btn {
+    background-color: var(--colorBody);
+    display: flex;
+    justify-content: flex-start;
+    flex: 1;
+}

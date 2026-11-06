@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/styles.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <meta name="csrf_token" content="{{ csrf_token }}">
+    <script src="../static/app.js"></script>
+    <title>COMET</title>
+</head>
+<body>
+    <!-- Header -->
+    <div>
+        <h1>COmprehensive Motif Evaluation Toolkit</h1>
+    </div>
+    <div>
+        <!-- Header Buttons -->
+        <div class="container-header">
+            <div class="button-group">
+                <button class="buttonHeader" onclick="pageProcessDNA()">Process DNA</button>
+                <button class="buttonHeader" onclick="pageFilterAA()">Filter AA</button>
+                <button class="buttonHeader" onclick="pageFilterMotif()">Filter Motif</button>
+                <button class="buttonHeader" onclick="pageCombineProfiles()">Combine Profiles</button>
+                <button class="buttonHeader" onclick="pagePredictions()">Predict Activity</button>
+            </div>
+            <div class="button-group-r">
+                <button class="buttonHeader" onclick="pageHome()">Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application -->
+    <div class="box">
+        <h2>Process DNA</h2>
+        <div class="info">
+            <span class="highlight">Extract</span> and <span class="highlight">translate</span> substrate DNA found between two flanking sequences on the 5' and 3' sides.<br>
+            If the extracted DNA sequence matches the specified sequence length then the
+            sequence will be translated.<br>Sequences not containing a stop codon or
+            unknown AA will be saved.<br><br>
+            Output files can be used for <span class="highlight">Filter AA</span> and <span class="highlight">Filter Motif</span>.
+        </div>
+
+        <!-- Forms -->
+        <div class="box-form">
+            <form id="formDNA" enctype="multipart/form-data" class="input-form" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <!-- Enzyme name -->
+                <div class="form-group">
+                    <label for="enzymeName">Enzyme Name:</label>
+                    <div class="form-wrapper">
+                        <input type="text" id="enzymeName"
+                               name="enzymeName" required value="Name">
+                    </div>
+                </div>
+
+                <!-- Experimental dataset -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="fileExp">Experimental Data:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Experimental substrates.<br>
+                                Acceptable file extensions:
+                                .fasta, .fasta.gz, .fa, .fa.gz, .fastq, .fastq.gz, .fq, .fq.gz
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" style="width: 140px" for="fileExp">Forward Read:</label>
+                        <input type="file" id="fileExp" name="fileExp"
+                               accept=".fasta,.fa,.fasta.gz,.fa.gz,.fastq,.fq,.gz"
+                               value="data/variantsExp.fastq"
+                               multiple>
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" style="width: 140px" for="fileExpRev">Reverse Read:</label>
+                        <input type="file" id="fileExpRev" name="fileExpRev"
+                               accept=".fasta,.fa,.fasta.gz,.fa.gz,.fastq,.fq,.gz"
+                               multiple>
+                    </div>
+                </div>
+
+                <!-- Background dataset -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="fileBg">Background Data:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Background substrates.<br>
+                                Acceptable file extensions:
+                                .fasta, .fasta.gz, .fa, .fa.gz, .fastq, .fastq.gz, .fq, .fq.gz
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" style="width: 140px" for="fileBg">Forward Read:</label>
+                        <input type="file" id="fileBg" name="fileBg"
+                               accept=".fasta,.fa,.fasta.gz,.fa.gz,.fastq,.fq,.gz"
+                               multiple>
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" style="width: 140px" for="fileBgRev">Reverse Read:</label>
+                        <input type="file" id="fileBgRev" name="fileBgRev"
+                               accept=".fasta,.fa,.fasta.gz,.fa.gz,.fastq,.fq,.gz"
+                               multiple>
+                    </div>
+                </div>
+
+                <!-- Flanking sequence -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="seq5Prime">Flanking Sequences:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Extract substrate DNA sequence between the 5' and 3' sequences.<br>
+                                Ex: (5') AAAGGCAGT-substrate-GGTGGAAGT (3')
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" style="width: 27px" for="seq5Prime">5':</label>
+                        <input type="text" id="seq5Prime"
+                               name="seq5Prime" value="AAAGGCAGT">
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" style="width: 27px" for="seq3Prime">3':</label>
+                        <input type="text" id="seq3Prime"
+                               name="seq3Prime" value="GGTGGAAGT">
+                    </div>
+                </div>
+
+                <!-- Minimum Phred Score -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="minPhred">Minimum Phred Score:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Minimum quality score of acceptable DNA reads.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="minPhred" name="minPhred"
+                               value="20" min="0"  max="40" style="width: 70px;">
+                    </div>
+                </div>
+
+                <!-- Minimum Substrate Counts -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="minCounts">Minimum Substrate Count:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Drop substrates with fewer counts than this value.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="minCounts" name="minCounts"
+                           value="1" min="1"  style="width: 70px;"
+                         required>
+                    </div>
+                </div>
+
+                <!-- Sequence Length -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="seqLength">Sequence Length:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Number of AAs in the substrate.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="seqLength" name="seqLength"
+                           value="8" min="1" style="width: 70px;"
+                           onchange="updateFixedAA()"
+                           required>
+                    </div>
+                </div>
+
+                <!-- Filter Substrates -->
+                <div class="form-group">
+                    <div class="help">
+                        <label>Fix Residues:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Select substrates with a given AA at a defined
+                                residue in the sequence.
+                            </span>
+                        </div>
+                    </div>
+                    <div id="fixAAContainer"></div>
+                </div>
+                <div class="form-group">
+                    <div class="help">
+                        <label>Exclude Residues:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Exclude substrates with a given AA at a defined
+                                residue in the sequence.
+                            </span>
+                        </div>
+                    </div>
+                    <div id="exclAAContainer"></div>
+                </div>
+                <div class="form-group">
+                    <div class="help">
+                        <label>Drop Position:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Remove a position from the sequence.
+                            </span>
+                        </div>
+                    </div>
+                    <div id="dropAAContainer"></div>
+                </div>
+
+                <!-- Execute -->
+                <div class="button-wrapper">
+                    <button class="button" onclick="buttonProcessDNA()">Evaluate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class=ft>
+        <span>Version 1.0.0 (2026)</span>
+        <a href="https://brent.iverson.cm.utexas.edu/">
+            <button class="btn">Iverson Lab</button>
+        </a>
+    </div>
+</body>
+</html>

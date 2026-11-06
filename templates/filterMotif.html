@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/styles.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <meta name="csrf_token" content="{{ csrf_token }}">
+    <script src="../static/app.js"></script>
+    <title>COMET</title>
+</head>
+<body>
+    <!-- Header -->
+    <div>
+        <h1>COmprehensive Motif Evaluation Toolkit</h1>
+    </div>
+    <div>
+        <!-- Header Buttons -->
+        <div class="container-header">
+            <div class="button-group">
+                <button class="buttonHeader" onclick="pageProcessDNA()">Process DNA</button>
+                <button class="buttonHeader" onclick="pageFilterAA()">Filter AA</button>
+                <button class="buttonHeader" onclick="pageFilterMotif()">Filter Motif</button>
+                <button class="buttonHeader" onclick="pageCombineProfiles()">Combine Profiles</button>
+                <button class="buttonHeader" onclick="pagePredictions()">Predict Activity</button>
+            </div>
+            <div class="button-group-r">
+                <button class="buttonHeader" onclick="pageHome()">Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application -->
+    <div class="box">
+        <h2>Filter Motif</h2>
+        <div class="info">
+            Evaluate an enzymes' <span class="highlight">Substrate Profile</span> by
+            applying an automated, entropy-based filter, that identifies
+            <span class="highlight">Recognition Sites</span> within substrate
+            sequences at a given <span class="highlight">Register</span>.
+        </div>
+
+        <!-- Forms -->
+        <div class="box-form">
+            <form class="input-form" id="filterSubs" enctype="multipart/form-data" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <!-- Enzyme name -->
+                <div class="form-group">
+                    <label for="enzymeName">Enzyme Name:</label>
+                    <div class="form-wrapper">
+                        <input type="text" id="enzymeName"
+                               name="enzymeName" value="Name" required>
+                    </div>
+                </div>
+
+                <!-- Experimental dataset -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="fileExp">Experimental Data:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Experimental substrates.<br>
+                                Only use unfiltered substrates.<br>
+                                Acceptable file extension: .json
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" for="fileExp">Substrates:</label>
+                        <input type="file" id="fileExp" name="fileExp"
+                               accept=".json" multiple required>
+                    </div>
+                </div>
+
+                <!-- Background dataset -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="fileBg">Background Data:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Background count matrix.<br>
+                                Acceptable file extension: .csv
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" for="fileBg">AA Counts:</label>
+                        <input type="file" id="fileBg" name="fileBg"
+                               accept=".csv" multiple required>
+                    </div>
+                </div>
+
+                <!-- Maximum Substrate Counts -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="maxCounts">Maximum Substrate Count:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Drop substrates with counts greater than this value.<br>
+                                Leave this input empty to not set a limit.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="maxCounts" name="maxCounts"
+                               value="" min="1" step="1" style="width: 70px;">
+                    </div>
+                </div>
+
+                <!-- Minimum Substrate Counts -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="minCounts">Minimum Substrate Count:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Drop substrates with fewer counts than this value.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="minCounts" name="minCounts"
+                               value="1" min="1" step="1" style="width: 70px;"
+                               required>
+                    </div>
+                </div>
+
+                <!-- Sequence Length -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="seqLength">Sequence Length:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Number of AAs in the substrate.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="seqLength" name="seqLength"
+                               value="8" min="1" step="1" style="width: 70px;"
+                               onchange="updateFixedAA()" required>
+                    </div>
+                </div>
+
+                <!-- Filter Substrates -->
+                <div class="form-group">
+                    <div class="help">
+                        <label>Fix Residues:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip" id="filter">
+                                Select substrates with a given AA at a defined
+                                residue in the sequence.
+                            </span>
+                        </div>
+                    </div>
+                    <div id="fixAAContainer"></div>
+                </div>
+                <div class="form-group">
+                    <div class="help">
+                        <label>Exclude Residues:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Exclude substrates with a given AA at a defined
+                                residue in the sequence.
+                            </span>
+                        </div>
+                    </div>
+                    <div id="exclAAContainer"></div>
+                </div>
+                <div class="form-group">
+                    <div class="help">
+                        <label>Drop Position:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Remove a position from the sequence.
+                            </span>
+                        </div>
+                    </div>
+                    <div id="dropAAContainer"></div>
+                </div>
+
+                <!-- Execute -->
+                <div class="button-wrapper">
+                    <button class="button" onclick="buttonFilterSubs('motif')">Evaluate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class=ft>
+        <span>Version 1.0.0 (2026)</span>
+        <a href="https://brent.iverson.cm.utexas.edu/">
+            <button class="btn">Iverson Lab</button>
+        </a>
+    </div>
+</body>
+</html>

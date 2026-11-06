@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/styles.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <script src="../static/app.js"></script>
+    <title>COMET</title>
+</head>
+<body>
+    <!-- Header -->
+    <div>
+        <h1>COmprehensive Motif Evaluation Toolkit</h1>
+    </div>
+    <div>
+        <!-- Header Buttons -->
+        <div class="container-header">
+            <div class="button-group">
+                <button class="buttonHeader" onclick="pageProcessDNA()">Process DNA</button>
+                <button class="buttonHeader" onclick="pageFilterAA()">Filter AA</button>
+                <button class="buttonHeader" onclick="pageFilterMotif()">Filter Motif</button>
+                <button class="buttonHeader" onclick="pageCombineProfiles()">Combine Profiles</button>
+                <button class="buttonHeader" onclick="pagePredictions()">Predict Activity</button>
+            </div>
+            <div class="button-group-r">
+                <button class="buttonHeader" onclick="pageHome()">Home</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Application -->
+    <div class="box">
+        <h2>ERROR:</h2>
+        <div class="box-form">
+            <div class="input-form">
+                <div>
+                    <p class="pL">An invalid file extension was found:</p>
+                    <p class="p3">Please use an accepted file extension for a given data type:</p>
+                    <p class="p3">* DNA Files: <span class="highlight">.fastq, .fq, .fasta, .fa, .fastq.gz, .fq.gz, .fasta.gz, .fa.gz</span></p>
+                    <p class="p3">* Substrates: <span class="highlight">.pkl</span></p>
+                    <p class="p3">* AA Counts: <span class="highlight">.csv</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class=ft>
+        <span>Version 1.0.0 (2026)</span>
+        <a href="https://brent.iverson.cm.utexas.edu/">
+            <button class="btn">Iverson Lab</button>
+        </a>
+    </div>
+</body>
+</html>

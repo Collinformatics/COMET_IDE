@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="../static/styles.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <meta name="csrf_token" content="{{ csrf_token }}">
+    <script src="../static/app.js"></script>
+    <title>COMET</title>
+</head>
+<body data-page="predict">
+    <!-- Header -->
+    <div>
+        <h1>COmprehensive Motif Evaluation Toolkit</h1>
+    </div>
+    <div>
+        <!-- Header Buttons -->
+        <div class="container-header">
+            <div class="button-group">
+                <button class="buttonHeader" onclick="pageProcessDNA()">Process DNA</button>
+                <button class="buttonHeader" onclick="pageFilterAA()">Filter AA</button>
+                <button class="buttonHeader" onclick="pageFilterMotif()">Filter Motif</button>
+                <button class="buttonHeader" onclick="pageCombineProfiles()">Combine Profiles</button>
+                <button class="buttonHeader" onclick="pagePredictions()">Predict Activity</button>
+            </div>
+            <div class="button-group-r">
+                <button class="buttonHeader" onclick="pageHome()">Home</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application -->
+    <div class="box">
+        <h2>Predict Activity</h2>
+        <div class="info">
+            Use a <span class="highlight">Substrate Profile</span> to predict
+            <span class="highlight">Substrate Activity</span>. Activity scores are made
+            from a prediction matrix that is evaluated by comparing AA frequencies in the
+            <span class="highlight">Substrate Profile</span> to the
+            <span class="highlight">Background</span> dataset.
+        </div>
+        <div class="info">
+            Multiple <span class="highlight">Substrate Profiles</span> can be combined
+            into an averaged set.
+        </div>
+
+        <!-- Forms -->
+        <div class="box-form">
+            <form class="input-form" id="filterSubs" enctype="multipart/form-data" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <!-- Enzyme name -->
+                <div class="form-group">
+                    <label for="enzymeName">Enzyme Name:</label>
+                    <div class="form-wrapper">
+                        <input type="text" id="enzymeName" name="enzymeName" value="Name" required>
+                    </div>
+                </div>
+
+                <!-- Predict Substrates-->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="predSubs">Predict Substrate Activity:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                To only predict activity:<br>&nbsp;&nbsp;AVLQSGFR, VTFQSAVK, ...<br><br>
+                                To predict activity and compare to experimental values:<br>&nbsp;&nbsp;AVLQSGFR:55, VTFQSAVK:20, ...
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <label for="predSubs"></label>
+                        <textarea class="textbox" id="predSubs" name="predSubs" oninput="checkSubs()"
+                            placeholder="Ex: AVLQSGFR, VTFQSAVK or AVLQSGFR:55, VTFQSAVK:20" required></textarea>
+                    </div>
+                    <div class="form-wrapper">
+                        <div class="errormsg" id="error-message"></div>
+                    </div>
+                </div>
+
+                <!-- Profiles -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="nProfiles">Number of Profiles:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Combine N number of profiles.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="nProfiles" name="nProfiles"
+                           value="1" min="1" style="width: 70px;"
+                           onchange="updateNumProfilesPred()"
+                           required>
+                    </div>
+                </div>
+                <!-- Sequence Length -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="seqLength">Sequence Length:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Number of AAs in the substrate.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="seqLength" name="seqLength"
+                               value="8" min="1" style="width: 60px;"
+                               onchange="updateFixedAA()"
+                               required>
+                    </div>
+                </div>
+
+                <!-- Motif Length -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="motifLength">Motif Length:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Number of AAs in the recognition site.
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <input type="number" id="motifLength" name="motifLength"
+                               value="8" min="1" style="width: 60px;"
+                               onchange="updateNumProfilesPred()"
+                               required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div id="profileContainer"></div> <!-- Experimental Data -->
+                </div>
+
+                <!-- Background dataset -->
+                <div class="form-group">
+                    <div class="help">
+                        <label for="fileBg">Background Data:</label>
+                        <div class="help-icon">?
+                            <span class="help-tooltip">
+                                Background count matrix.<br>
+                                Acceptable file extension: .csv
+                            </span>
+                        </div>
+                    </div>
+                    <div class="form-wrapper">
+                        <label class="label-w" style="width: 107px" for="fileBg">AA Counts:</label>
+                        <input type="file" id="fileBg" name="fileBg"
+                               accept=".csv"
+                               value="data/variantsBg.fastq"
+                               multiple required>
+                    </div>
+                </div>
+
+                <!-- Execute -->
+                <div class="button-wrapper">
+                    <button class="button" onclick="buttonPredActivity()">Evaluate</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class=ft>
+        <span>Version 1.0.0 (2026)</span>
+        <a href="https://brent.iverson.cm.utexas.edu/">
+            <button class="btn">Iverson Lab</button>
+        </a>
+    </div>
+</body>
+</html>
