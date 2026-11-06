@@ -55,7 +55,7 @@ class WebApp:
 
         # Params: Dataset
         self.useCustomAxis = False
-        self.customAxis = ['P5','P4','P3','P2','P1','P1\'','P2\'','P3\'']
+        self.customAxis = ['P4','P3','P2','P1','P1\'','P2\'','P3\'','P4\'']
         self.enzymeName = ''
         self.seqLength = 0
         self.maxCounts = False
