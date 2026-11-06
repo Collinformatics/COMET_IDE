@@ -1773,7 +1773,7 @@ class WebApp:
         ax.set_xticks(xTicks)
         ax.set_xticklabels(data.columns)
         if self.useCustomAxis:
-            ax.set_xticklabels(self.customAxis)
+            ax.set_xticklabels(self.customAxis[0:len(xTicks)])
 
         # Set y-ticks
         yTicks = np.arange(len(data.index)) + 0.5
@@ -1982,7 +1982,7 @@ class WebApp:
         ax.set_xticklabels(self.entropy.index, rotation=0, ha='center',
                            fontsize=self.labelSizeTicks)
         if self.useCustomAxis:
-            ax.set_xticklabels(self.customAxis, fontsize=self.labelSizeTicks)
+            ax.set_xticklabels(self.customAxis[0:len(xTicks)], fontsize=self.labelSizeTicks)
         for tick in ax.xaxis.get_major_ticks():
             tick.tick1line.set_markeredgewidth(self.lineThickness) # Set tick width
 
@@ -2259,7 +2259,7 @@ class WebApp:
         ax.set_xticks(xTicks)
         ax.set_xticklabels(scores.columns)
         if self.useCustomAxis:
-            ax.set_xticklabels(self.customAxis)
+            ax.set_xticklabels(self.customAxis[0:len(xTicks)])
 
         # Set y-ticks
         yTicks = np.arange(len(scores.index)) + 0.5
@@ -2352,7 +2352,7 @@ class WebApp:
         ax.set_xticks(xTicks)
         ax.set_xticklabels(data.columns)
         if self.useCustomAxis:
-            ax.set_xticklabels(self.customAxis)
+            ax.set_xticklabels(self.customAxis[0:len(xTicks)])
 
         # Set y-ticks
         yTicks = np.arange(len(data.index)) + 0.5
@@ -2452,7 +2452,7 @@ class WebApp:
             motif.ax.set_xticks([pos for pos in range(len(xTicks))])
             motif.ax.set_xticklabels(xTicks)
             if self.useCustomAxis:
-                ax.set_xticklabels(self.customAxis)
+                ax.set_xticklabels(self.customAxis[0:len(xTicks)])
 
             # Set y-ticks
             yTicks = [yMin, 0, yMax]
@@ -2621,7 +2621,7 @@ class WebApp:
         motif.ax.set_xticklabels(xTicks, fontsize=self.labelSizeTicks,
                                  rotation=0, ha='center')
         if self.useCustomAxis:
-            ax.set_xticklabels(self.customAxis)
+            ax.set_xticklabels(self.customAxis[0:len(xTicks)])
 
         # Set y-ticks
         yMax = self.entropyMax
