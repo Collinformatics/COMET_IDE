@@ -18,7 +18,6 @@ pd.set_option('display.float_format', '{:,.3f}'.format)
 
 # ========================================================================================
 # Input: Data
-inPlotBoth = False # Add the secondary enzyme to the figures
 inEnzyme = f'M{"ᵖʳᵒ"}2'
 inEnzyme2 = f'M{"ᵖʳᵒ"}' # Secondary enzyme
 inSigFigs = 0
@@ -38,37 +37,38 @@ inLabelTickSize = 16
 # Input: Datasets
 inSubstrates = ['AVLQSGFR', 'VILQSGFR', 'VILQTGFR', 'VILQSPFR',
                 'VILHSGFR', 'VIMQSGFR', 'VPLQSGFR', 'NILQSGFR']
-inExpActivity = [46.1, 49.5, 14.5, 0.0, 13.1, 37.0, 0.0, 16.1]
-inExpActivity2 = [32.1, 39.1, 14.9, 0.0, 16.0, 36.5, 0.0, 15.6]
+inExpActivity = [46.1, 49.5, 14.5, 0, 13.1, 37.0, 0, 16.1]
+inExpActivity2 = [27.8, 34.8, 12.7, 0, 13.8, 31.3, 0, 15.2]
+inExpActivity2 = [32.1, 39.1, 14.9, 0, 16.0, 36.5, 0, 15.6]
 # inPredActivity = [0.595, 1.0, 0.008, 0.004, 0.055, 0.417, 0.003, 0.049] # 6 AA
 # inPredActivity2 = [0.748, 1.0, 0.007, 0.009, 0.03, 0.453, 0.005, 0.027] # 6 AA
-inPredActivity = [0.979, 1.0, 0.032, 0.004, 0.053, 0.313, 0.005, 0.008] # 8 AA
-inPredActivity2 = [0.646, 1.0, 0.007, 0.008, 0.028, 0.493, 0.005, 0.038] # 8 AA
-inStDev = [0.1, 0.09, 0.02, 0, 0.06, 0.09, 0, 0.05]
-inStDev2 = [0.01, 0.058, 0.025, 0.0, 0.027, 0.044, 0.0, 0.033]
+inPredActivity = [
+    1.0, 0.99975, 0.83602, 0.75165, 0.83622, 0.93213, 0.75742, 0.80994
+]# 8 AA
+inPredActivity2 = [
+    0.97208, 1.0, 0.75065, 0.65427, 0.80786, 0.9474, 0.68811, 0.82464
+] # 8 AA
+inStDev = [4.8, 2.6, 2.5, 0, 4.4, 3.2, 0, 2.9]
+inStDev2 = [1.2, 5.5, 2.7, 0, 1.8, 4.7, 0, 1.9]
 inSubstratesNat = ['AVLQSGFR', 'VTFQSAVK', 'ATVQSKMS', 'ATLQAIAS',
                    'VKLQNNEL', 'VRLQAGNA', 'PMLQSADA', 'TVLQAVGA',
                    'ATLQAENV', 'TRLQSLEN', 'PKLQSSQA']
-inExpActivityNat = [1.0, 0.475, 0.082, 0.459,
-                    0.213, 0.607, 0.361, 0.361,
-                    0.361, 0.459, 0.541]
-inPredActivityNat = [1.0, 0.134, 0.004, 0.071,
-                     0.097, 0.251, 0.262, 0.06,
-                     0.36, 0.071, 0.042]
-# inSubstratesNat = ['AVLQSG', 'VTFQSA', 'ATVQSK', 'ATLQAI',
-#                    'VKLQNN', 'VRLQAG', 'PMLQSA', 'TVLQAV',
-#                    'ATLQAE', 'TRLQSL', 'PKLQSS']
-# inPredActivityNat = [0.769, 0.124, 0.004, 0.598,
-#                      0.042, 1.0, 0.299, 0.364,
-#                      0.705, 0.209, 0.2]
-inStDevNat = [0 for _ in range(len(inSubstratesNat))]
+inExpActivityNat = [53, 24, 2, 19,
+                    3, 41, 17, 16,
+                    10, 11, 21]
+inPredActivityNat = [
+    1.0, 0.86857, 0.76313, 0.84762, 0.84903,
+    0.91229, 0.92121, 0.86465, 0.92956, 0.86279, 0.8557
+]
+inStDevNat = [2.6, 0.5, 0.5, 0.4, 0.2, 2.0, 1.2, 2.0, 1.0, 1.6, 0.6]
 inDatasets = [ # Enzyme name, Substrates, Exp Activity, Exp StDev, Predicted Activity
-    # (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
-    # (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
-    (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
+    (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
+    (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
+    # (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
 ] # Plot this data
 
 # Input: Figures
+inSaveTag = f'synthSubs_Mpros-MinES_neg0_5' # Add label to saved data
 inPlotBarGraph = False
 inPlotTable = True
 inSavePath = 'Data/Figures/'
@@ -76,10 +76,53 @@ inFigTitle = f'Enzyme Activity'
 inColor1 = '#BF5700'
 inColor2 = '#F8971F'
 inFigResolution = 600
-inFigSaveTag = f'' # Add label to saved figures
 inPlotNDatasets = 3 # Max num of plotted datasets
-inPlotColors = ['#BF5700', '#101010', '#2E9418']
-inPlotMarkers = ['D', 'o', '^']
+inPlotColors = ['#BF5700', '#101010', '#F8971F', '#2E9418',]
+inPlotMarkers = ['D', 'o', '^', ]
+
+# Input: Custom data
+inPlotCleaveNet = False
+inSubstratesCN, inPredActivityCN, inExpPredActivityCN, inStDevCN = [], [], [], []
+if inPlotCleaveNet:
+    inSubstrates = ['AVLQSGFR', 'VILQSGFR',
+                    'VIMQSGFR',]
+    inExpActivity = [
+        1.588714482717045, 1.5637731129492973,
+        0.5176798411319979
+    ]
+    inPredActivity = [
+        2.2341681287344204, 2.133958673606005,
+        -0.10741899173024665,
+    ]
+    inSubstratesCN = [
+        'ARLQALFR', 'SRLQAGFR', 'VLLQALFR', 'VMLQALFR',
+        'VNLQGLFR', 'VLLQGNFR', 'VALQCAFR',
+        'IKLQCNFR', 'ILLQGFFR', 'ALLQGNFR',
+        'VSLQAIFR', 'VLLQGYFR', 'VLLQSQFR', 'IWLQGSFR',
+        'CLLQCVFR', 'VNLQSLFR', 'VLLQGRFR', 'CLLQALFR'
+    ] # CleaveNet substrates
+    inExpPredActivityCN = [
+        0.9597151600034503, 0.3650697573358019, 0.9644517350670326, 1.0797913778321793,
+        0.09705266047539371, 1.5495228973789, 0.7617482731121744,
+        0.614607080696203, -0.39818537162702144, 1.4950726387522746,
+        -0.013071362869361664, 0.08246156445857096, 0.9069049348566184, -0.5437405800340406,
+        -0.1697590067954982, -0.2929163960274127, 0.8290939641364768, 0.8497066297693364
+    ]
+    inPredActivityCN = [
+        0.48883328431314166, -0.2447286854435148, 0.49729298509131736, 0.7204989565593584,
+        -0.4280625593065964, 2.078167824900689, 0.178651974732913,
+        -0.0046997308775174745, -0.6353448494675541, 1.8743995174115495,
+        -0.4865003551385704, -0.43630217773900515, 0.39800922050803417, -0.6746151958840482,
+        -0.5562851208566394, -0.6018549567838597, 0.2752126683745324, 0.30652439474986753
+    ]
+    inStDev = [0 for _ in range(len(inSubstrates))]
+    inStDevCN = [0 for _ in range(len(inSubstratesCN))]
+    inDatasets = [ # Enzyme name, Substrates, Exp Activity, Exp StDev, Predicted Activity
+        (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
+        # (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
+        # (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
+        (f'M{"ᵖʳᵒ"}2 CleaveNet', inSubstratesCN, inExpPredActivityCN, inStDevCN, inPredActivityCN)
+    ] # Plot this data
 
 
 
@@ -106,7 +149,6 @@ for idx, enzyme in enumerate(inDatasets, start=1):
             f'Predicted Z': emptyList,
             f'Predicted Rank': emptyList,
         }
-
 
 
 # ========================================================================================
@@ -167,27 +209,33 @@ def zScore(data, tags, zTags):
     return data
 
 
-def fnExp(x, a, b, c):
-    return a * np.exp(b * x) + c
+def fnLinear(x, m, b):
+    return m * x + b
 
 
-def fitData(x, y):
-    x, y = np.array(x), np.array(y)
-
-    # Fit the curve
-    popt, pcov = curve_fit(fnExp, x, y, p0=[1, 1, 0], maxfev=10000)
-    # a, b, c = popt
-
-    # Generate smooth curve for plotting
+def fitData(x, y, printOutputs=True):
+    if printOutputs:
+        print(f'Fitting data to an linear equation:')
+    popt, pcov = curve_fit(fnLinear, x, y, maxfev=10000)
     xFit = np.linspace(min(x), max(x), 300)
-    yFit = fnExp(xFit, *popt)
-
-    # R² for the exponential fit
-    yPred = fnExp(x, *popt)
-    ss_res = np.sum((y - yPred) ** 2)
-    ss_tot = np.sum((y - np.mean(y)) ** 2)
+    yFit = fnLinear(xFit, *popt)
+    yPred = fnLinear(np.array(x), *popt)
+    ss_res = np.sum((np.array(y) - yPred) ** 2)
+    ss_tot = np.sum((np.array(y) - np.mean(y)) ** 2)
     r2 = 1 - (ss_res / ss_tot)
-
+    if printOutputs:
+        dec = 3
+        m, b = popt # y = m · x + b
+        if m > 10**-3:
+            m = f'{m:,.{dec}f}'
+        else:
+            m = f'{m:,.{dec}e}'
+        if b > 10**-3:
+            b = f'{b:,.{dec}f}'
+        else:
+            b = f'{b:,.{dec}e}'
+        print(f'\ty = {m} * x + {b}\n'
+              f'\tR² = {round(r2, dec)}\n\n')
     return xFit, yFit, r2
 
 
@@ -261,8 +309,8 @@ def plotBars(dataset, barWidth=0.35):
 
         if inSavePath:
             figName = f'{enzyme}-enzActivity-bars.png'
-            if inFigSaveTag:
-                figName = figName.replace('.png', f'-{inFigSaveTag}.png')
+            if inSaveTag:
+                figName = figName.replace('.png', f'-{inSaveTag}.png')
             if inNormalizeSub:
                 figName = figName.replace('.png',
                                           f'-Norm_{inNormalizeSub}.png')
@@ -287,6 +335,12 @@ def processData(dataset, tags, zTags):
     dataset = normalizeData(dataset, tags)
     dataset = zScore(dataset, tags, zTags)
     # pdata(dataset)
+    if 'Mᵖʳᵒ2 CleaveNet' in dataset.keys():
+        dataset['Mᵖʳᵒ2 CleaveNet']['Activity Z'] = inExpPredActivityCN
+        dataset[f'Mᵖʳᵒ2 CleaveNet']['Predicted Z']= inPredActivityCN
+        if f'M{"ᵖʳᵒ"}2' in dataset.keys():
+            dataset[f'M{"ᵖʳᵒ"}2']['Activity Z'] = inExpActivity
+            dataset[f'M{"ᵖʳᵒ"}2']['Predicted Z']= inPredActivity
 
     # Build tables
     tables = {}
@@ -302,8 +356,8 @@ def processData(dataset, tags, zTags):
 
         if inSavePath and inSaveTables:
             fileName = f'enzActivity-table-{enzyme}.csv'
-            if inFigSaveTag:
-                fileName = fileName.replace('.csv', f'-{inFigSaveTag}.csv')
+            if inSaveTag:
+                fileName = fileName.replace('.csv', f'-{inSaveTag}.csv')
             if inNormalizeSub:
                 fileName = fileName.replace('.csv',
                                             f'-Norm_{inNormalizeSub}.csv')
@@ -328,10 +382,22 @@ if inPlotBarGraph:
 
 
 # ========================================================================================
+def plotTrendline(axis, xVals, yVals, color):
+    x_fit, y_fit, fitCurve = fitData(x=xVals, y=yVals, printOutputs=False)
+    # color = '#101010'
+    axis.plot(x_fit, y_fit, color=color,
+            linestyle='-', linewidth=inLinewidth)
+
+
 # Plot data
 fig, ax = plt.subplots(figsize=inFigSize)
 plt.title(inFigTitle, fontsize=inTitleSize, fontweight='bold')
 x, y = f'Activity Z {inEnzyme}', f'Predicted Z {inEnzyme}'
+for idx, enzyme in enumerate(data.keys()):
+    xData = data[enzyme][dataZTags[0]] # Plot the line behind all datapoints
+    yData = data[enzyme][dataZTags[1]]
+    plotTrendline(axis=ax, xVals=xData, yVals=yData, color=inPlotColors[idx])
+
 for idx, enzyme in enumerate(data.keys()):
     x = data[enzyme][dataZTags[0]]
     y = data[enzyme][dataZTags[1]]
@@ -349,14 +415,11 @@ for idx, enzyme in enumerate(data.keys()):
         )
     elif l2 in label:
         label = label.replace(l2, f'SARS-CoV M{"ᵖʳᵒ"}')
-    # print(f'{enzyme}: {label}')
     x_fit, y_fit, fitCurve = fitData(x=x, y=y)
     label += f' R² = {fitCurve:.3f}, ρ = {rho:.3f}'
 
     # Add data
     edgeWidth = 1
-    ax.plot(x_fit, y_fit, color=inPlotColors[idx],
-            linestyle='-', linewidth=inLinewidth)
     ax.plot(x, y, color=inPlotColors[idx], marker=inPlotMarkers[idx],
             linestyle='none', markeredgecolor='black',
             markeredgewidth=edgeWidth, label=label)
@@ -371,13 +434,16 @@ for _, spine in ax.spines.items():
 
 # X Axis
 ax.set_xlabel('Experimental Activity Z Scores', fontsize=inLabelSize)
+yTicks = np.arange(2, -2, 0.5)
+# ax.set_xticks(yTicks)
+# ax.set_xlim([-2.0, 2.0]) # Set x-axis
 ax.set_xticks(ax.get_xticks())
 ax.set_xticklabels(ax.get_xticklabels(), ha='center', fontsize=inLabelSize-2)
 
 # Y Axis
 ax.set_ylabel('Predicted Activity Z Scores', fontsize=inLabelSize)
 ax.set_yticks(ax.get_yticks())
-# ax.set_ylim([-1.0, 2.5]) # Set yticks
+
 
 # Set tick parameters
 ax.tick_params(axis='both', which='major', length=inTickLength,
@@ -389,8 +455,8 @@ plt.show()
 
 if inSavePath:
     figName = 'enzActivity-scatter.png'
-    if inFigSaveTag:
-        figName = figName.replace('.png', f'-{inFigSaveTag}.png')
+    if inSaveTag:
+        figName = figName.replace('.png', f'-{inSaveTag}.png')
     if inNormalizeSub:
         figName = figName.replace('.png',
                                   f'-Norm_{inNormalizeSub}.png')

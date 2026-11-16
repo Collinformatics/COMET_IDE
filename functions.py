@@ -3642,10 +3642,10 @@ class NGS:
                     x = pearsonr(
                         vect1, vect2
                     )
-                    pearson.loc[f'{combo}', pos] = x[0]
-                    pValues.loc[f'{combo}', pos] = x[1]
+                    pearson.loc[f'Reg{set1}-Reg{set2}', pos] = x[0]
+                    pValues.loc[f'Reg{set1}-Reg{set2}', pos] = x[1]
 
-                    similarity.loc[f'{combo}', pos] = cosine_similarity(
+                    similarity.loc[f'Reg{set1}-Reg{set2}', pos] = cosine_similarity(
                         vect1.reshape(1, -1), vect2.reshape(1, -1)
                     )[0][0]
             print(f'Cosine Similarity:\n{similarity}\n\n')
@@ -6023,7 +6023,7 @@ class NGS:
             # print(f'{s}\n')
 
 
-            dec = self.roundVal - 1
+            dec = self.roundVal-1
             maxActivity = max(activityPred.values())
             print(f'Matrix Type: {purple}{tag}{resetColor}\n'
                   f'Predicted Activity: '
@@ -6064,11 +6064,12 @@ class NGS:
                 scores.append(float(s))
 
             # Summarize datasets
-            expActivity = [round(a, self.roundVal) for a in activityExp.values()]
-            expScores = [round(a, self.roundVal) for a in activityExpNorm.values()]
-            expScoresZ = [round(a, self.roundVal) for a in activityExpZ.values()]
-            predScores = [round(a, self.roundVal) for a in activityPredNorm.values()]
-            predScoresZ = [round(a, self.roundVal) for a in activityPredZ.values()]
+            dec = self.roundVal+2
+            expActivity = [round(a, dec) for a in activityExp.values()]
+            expScores = [round(a, dec) for a in activityExpNorm.values()]
+            expScoresZ = [round(a, dec) for a in activityExpZ.values()]
+            predScores = [round(a, dec) for a in activityPredNorm.values()]
+            predScoresZ = [round(a, dec) for a in activityPredZ.values()]
             expRank = self.rankScores(expScoresZ)
             predRank = self.rankScores(predScoresZ)
 
