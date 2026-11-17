@@ -62,13 +62,14 @@ inPredActivityNat = [
 ]
 inStDevNat = [2.6, 0.5, 0.5, 0.4, 0.2, 2.0, 1.2, 2.0, 1.0, 1.6, 0.6]
 inDatasets = [ # Enzyme name, Substrates, Exp Activity, Exp StDev, Predicted Activity
-    (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
-    (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
-    # (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
+    # (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
+    # (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
+    (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
 ] # Plot this data
 
 # Input: Figures
-inSaveTag = f'synthSubs_Mpros-MinES_neg0_5' # Add label to saved data
+inSaveTag = f'SynthSubs_Mpro2-MinES_neg0_5' # Add label to saved data
+# inSaveTag = f'NatSubs_Mpros-MinES_neg0_5'
 inPlotBarGraph = False
 inPlotTable = True
 inSavePath = 'Data/Figures/'
@@ -80,19 +81,27 @@ inPlotNDatasets = 3 # Max num of plotted datasets
 inPlotColors = ['#BF5700', '#101010', '#F8971F', '#2E9418',]
 inPlotMarkers = ['D', 'o', '^', ]
 
+# Input: Figure Axis
+inCustomTicks = True
+inTickMaxX = 1.5
+inTickMinX = -2.5
+inTickStepX = 0.5
+
 # Input: Custom data
-inPlotCleaveNet = False
+inPlotCleaveNet = True
 inSubstratesCN, inPredActivityCN, inExpPredActivityCN, inStDevCN = [], [], [], []
 if inPlotCleaveNet:
-    inSubstrates = ['AVLQSGFR', 'VILQSGFR',
-                    'VIMQSGFR',]
-    inExpActivity = [
-        1.588714482717045, 1.5637731129492973,
-        0.5176798411319979
+    inSubstrates = [
+        'AVLQSGFR', 'VILQSGFR', 'VILQTGFR', 'VILQSPFR',
+        'VILHSGFR', 'VIMQSGFR', 'VPLQSGFR', 'NILQSGFR'
+    ]
+    inExpPredActivity = [
+        1.1626316401176024, 1.1601687620106653, -0.7694139874543445, -2.091942020762278,
+        -0.7665600191348032, 0.44537914860266203, -1.9921593705553493, -1.1487745828243316,
     ]
     inPredActivity = [
-        2.2341681287344204, 2.133958673606005,
-        -0.10741899173024665,
+        1.0991463872378342, 1.0967121652223502, -0.8104194935536261, -2.1175596421891774,
+        -0.8075987317403014, 0.3902392754369288, -2.0189379835642933, -1.18536615066009
     ]
     inSubstratesCN = [
         'ARLQALFR', 'SRLQAGFR', 'VLLQALFR', 'VMLQALFR',
@@ -101,28 +110,43 @@ if inPlotCleaveNet:
         'VSLQAIFR', 'VLLQGYFR', 'VLLQSQFR', 'IWLQGSFR',
         'CLLQCVFR', 'VNLQSLFR', 'VLLQGRFR', 'CLLQALFR'
     ] # CleaveNet substrates
-    inExpPredActivityCN = [
-        0.9597151600034503, 0.3650697573358019, 0.9644517350670326, 1.0797913778321793,
-        0.09705266047539371, 1.5495228973789, 0.7617482731121744,
-        0.614607080696203, -0.39818537162702144, 1.4950726387522746,
-        -0.013071362869361664, 0.08246156445857096, 0.9069049348566184, -0.5437405800340406,
-        -0.1697590067954982, -0.2929163960274127, 0.8290939641364768, 0.8497066297693364
+    inSubstratesCN = [
+        'AVLQSGFR', 'VILQSGFR', 'VILQTGFR', 'VILQSPFR',
+        'VILHSGFR', 'VIMQSGFR', 'VPLQSGFR', 'NILQSGFR',
+
+        'ARLQALFR', 'SRLQAGFR', 'VLLQALFR', 'VMLQALFR', 'VNLQGLFR',
+        'VLLQGNFR', 'KRLQAYFR', 'VALQCAFR', 'IKLQCNFR', 'ILLQGFFR',
+        'QALQAGFR', 'ALLQGNFR', 'VSLQAIFR', 'VLLQGYFR', 'VLLQSQFR',
+        'IWLQGSFR', 'CLLQCVFR', 'VNLQSLFR', 'VLLQGRFR', 'CLLQALFR'
     ]
     inPredActivityCN = [
-        0.48883328431314166, -0.2447286854435148, 0.49729298509131736, 0.7204989565593584,
-        -0.4280625593065964, 2.078167824900689, 0.178651974732913,
-        -0.0046997308775174745, -0.6353448494675541, 1.8743995174115495,
-        -0.4865003551385704, -0.43630217773900515, 0.39800922050803417, -0.6746151958840482,
-        -0.5562851208566394, -0.6018549567838597, 0.2752126683745324, 0.30652439474986753
+        1.0991463872378342, 1.0967121652223502, -0.8104194935536261, -2.1175596421891774,
+        -0.8075987317403014, 0.3902392754369288, -2.0189379835642933, -1.18536615066009,
+        0.6464222353119519, 0.2710546216932639, 0.7586014151928675, 0.7054769006964577,
+        0.12116927610828196, 1.0979251319862993, -1.7958130462397988, 0.6684091075490959,
+        0.47127683954122895, 0.005970012796409979, -2.1734034545457126, 1.0527570964841741,
+        0.015865964519812873, 0.23500266032187625, 0.6989736083971481, -0.13469115320770542,
+        0.34597688883069005, -0.02952752960911776, 0.7004704355157642, 0.6918671624673838
     ]
+    inExpPredActivityCN = [
+        1.1626316401176024, 1.1601687620106653, -0.7694139874543445, -2.091942020762278,
+        -0.7665600191348032, 0.44537914860266203, -1.9921593705553493, -1.1487745828243316,
+        0.7045779395235766, 0.32479143206696237, 0.818077712521039, 0.7643278068581194,
+        0.17314160972380768, 1.161396008033571, -1.7664077670645175, 0.7268236451036064,
+        0.5273707012229368, 0.05658620033988914, -2.148443236339964, 1.1156962464407814,
+        0.06659864895461784, 0.2883150606394876, 0.7577479566533724, -0.08573085375137095,
+        0.4005956973644998, 0.02067077459625153, 0.7592624046851704, 0.7505578523871154
+    ]
+
     inStDev = [0 for _ in range(len(inSubstrates))]
     inStDevCN = [0 for _ in range(len(inSubstratesCN))]
     inDatasets = [ # Enzyme name, Substrates, Exp Activity, Exp StDev, Predicted Activity
-        (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpActivity, inStDev, inPredActivity),
+        # (f'M{"ᵖʳᵒ"}2', inSubstrates, inExpPredActivity, inStDev, inPredActivity),
         # (f'M{"ᵖʳᵒ"}', inSubstrates, inExpActivity2, inStDev2, inPredActivity2),
         # (f'M{"ᵖʳᵒ"}2 pp1a/b', inSubstratesNat, inExpActivityNat, inStDevNat, inPredActivityNat)
         (f'M{"ᵖʳᵒ"}2 CleaveNet', inSubstratesCN, inExpPredActivityCN, inStDevCN, inPredActivityCN)
     ] # Plot this data
+    inSaveTag = f'CleaveNet-Subs_Mpro2-MinES_neg0_5' # Add label to saved data
 
 
 
@@ -434,10 +458,12 @@ for _, spine in ax.spines.items():
 
 # X Axis
 ax.set_xlabel('Experimental Activity Z Scores', fontsize=inLabelSize)
-yTicks = np.arange(2, -2, 0.5)
-# ax.set_xticks(yTicks)
-# ax.set_xlim([-2.0, 2.0]) # Set x-axis
-ax.set_xticks(ax.get_xticks())
+if inCustomTicks:
+    xTicks = np.arange(inTickMinX, inTickMaxX+inTickStepX, inTickStepX)
+    ax.set_xticks(xTicks)
+    ax.set_xlim([inTickMinX, inTickMaxX]) # Set x-axis
+else:
+    ax.set_xticks(ax.get_xticks())
 ax.set_xticklabels(ax.get_xticklabels(), ha='center', fontsize=inLabelSize-2)
 
 # Y Axis

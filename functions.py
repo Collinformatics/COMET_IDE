@@ -3626,11 +3626,9 @@ class NGS:
 
         # Evaluate similarity
         if len(frameESList) > 1:
-            from sklearn.metrics.pairwise import cosine_similarity
             from scipy.stats.stats import pearsonr
             indicies = [i for i in range(len(frameESList))]
             combos = list(combinations(indicies, 2))
-            similarity = pd.DataFrame(0.0, index=[], columns=motifFrame)
             pearson = pd.DataFrame(0.0, index=[], columns=motifFrame)
             pValues = pd.DataFrame(0.0, index=[], columns=motifFrame)
             for combo in combos:
@@ -3644,16 +3642,10 @@ class NGS:
                     )
                     pearson.loc[f'Reg{set1}-Reg{set2}', pos] = x[0]
                     pValues.loc[f'Reg{set1}-Reg{set2}', pos] = x[1]
-
-                    similarity.loc[f'Reg{set1}-Reg{set2}', pos] = cosine_similarity(
-                        vect1.reshape(1, -1), vect2.reshape(1, -1)
-                    )[0][0]
-            print(f'Cosine Similarity:\n{similarity}\n\n')
             print(f'Pearson Correlation Coefficient:\n{pearson}\n')
             pd.options.display.float_format = '{:,.3e}'.format
             print(f'p-value:\n{pValues}\n\n')
             pd.options.display.float_format = '{:,.3f}'.format
-            # sys.exit()
 
         # Combine the ES DFs
         frameESCombined = pd.concat(frameESList, axis=0, keys=range(len(frameESList)))
@@ -6023,14 +6015,14 @@ class NGS:
             # print(f'{s}\n')
 
 
-            dec = self.roundVal-1
+            dec = self.roundVal
             maxActivity = max(activityPred.values())
             print(f'Matrix Type: {purple}{tag}{resetColor}\n'
                   f'Predicted Activity: '
-                  f'(Max Score: {colorP}{maxActivity:.{dec}e}{resetColor})')
+                  f'(Max Score: {colorP}{maxActivity:.{dec}f}{resetColor})')
             for index, (substrate, activity) in enumerate(activityPred.items()):
                 print(f'    {pink}{substrate}{resetColor} ({ranked[index]}), '
-                      f'Score: {colorP}{activity:.{dec}e}{resetColor}')
+                      f'Score: {colorP}{activity:.{dec}f}{resetColor}')
                 if index == self.printNumber - 1:
                     break
             print()
@@ -6046,6 +6038,9 @@ class NGS:
                 for seq, count in data.items():
                     z[seq] = float((count - mu) / sigma)
                 return z
+
+            # print(f'Pred Z-scores:\n\t{list(ZScores(activityPred).values())}\n')
+
 
             # Normalize values
             activityExpNorm, maxExpActivity = {}, max(activityExp.values())
@@ -6064,7 +6059,7 @@ class NGS:
                 scores.append(float(s))
 
             # Summarize datasets
-            dec = self.roundVal+2
+            dec = 5
             expActivity = [round(a, dec) for a in activityExp.values()]
             expScores = [round(a, dec) for a in activityExpNorm.values()]
             expScoresZ = [round(a, dec) for a in activityExpZ.values()]
@@ -6183,7 +6178,7 @@ class NGS:
             def fnLinear(x, m, b):
                 return m * x + b
 
-            def fitDataLinear(x, y):
+            def fitData(x, y):
                 print('Linear Fit:')
                 popt, pcov = curve_fit(fnLinear, x, y, maxfev=10000)
                 xFit = np.linspace(min(x), max(x), 300)
@@ -6198,7 +6193,7 @@ class NGS:
 
 
             # Fit curve: linear
-            x_fit, y_fit, r2 = fitDataLinear(
+            x_fit, y_fit, r2 = fitData(
                 x=np.array(expScoresZ), y=np.array(predScoresZ)
             )
 
